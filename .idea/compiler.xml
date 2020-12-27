@@ -15,10 +15,12 @@
         <sourceOutputDir name="../../target/generated-sources/annotations" />
         <sourceTestOutputDir name="../../target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="wrapper" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="wrapper" target="1.5" />
+      <module name="ci-lang" target="8" />
+      <module name="interpreter" target="9" />
     </bytecodeTargetLevel>
   </component>
 </project>

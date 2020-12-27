@@ -2,6 +2,11 @@
 <project version="4">
   <component name="RemoteRepositoriesConfiguration">
     <remote-repository>
+      <option name="id" value="vantaio-central" />
+      <option name="name" value="maven.vanta.io-releases" />
+      <option name="url" value="https://maven.vanta.io/artifactory/vantaio-central" />
+    </remote-repository>
+    <remote-repository>
       <option name="id" value="central" />
       <option name="name" value="Central Repository" />
       <option name="url" value="https://repo.maven.apache.org/maven2" />
