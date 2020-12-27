@@ -1,0 +1,586 @@
+options
+{
+    DEBUG_PARSER = true;
+    DEBUG_LOOKAHEAD = true;
+    LOOKAHEAD = 2048;
+}
+PARSER_BEGIN(Parser)
+package org.alindner.cish.compiler;
+
+import java.nio.charset.Charset;
+import java.util.*;
+import java.io.*;
+import java.security.NoSuchAlgorithmException;
+@lombok.extern.log4j.Log4j2
+public class Parser {
+	private final List<String> variables = new ArrayList<>();
+	private final List<String> java = new ArrayList<>();
+	private final List<String> imports = new ArrayList<>();
+	private final List<String> loads = new ArrayList<>();
+	private final List<String> require = new ArrayList<>();
+	private final Map<String, String> bash = new HashMap<>();
+	private boolean renderClass = true;
+	private File base;
+
+	public List<String> getJavaLines(){
+		return this.java;
+	}
+	public List<String> getImports(){
+		return this.imports;
+	}
+	public List<String> getRequires(){
+		return this.require;
+	}
+    public List<String> getLoads(){
+		return this.loads;
+	}
+	public Map<String, String> getBash(){
+		return this.bash;
+	}
+
+	public Parser(InputStream is, boolean dummy,File base) {
+		this(is, Charset.defaultCharset());
+		this.base = base;
+	}
+	public Parser(Reader reader, boolean renderClass,File base) {
+		this(reader);
+		this.renderClass=renderClass;
+		this.base = base;
+	}
+}
+PARSER_END(Parser)
+SKIP :
+{
+  " "
+| "\t"
+| <"//" (~["\n","\r"])* ("\n"|"\r")>
+| <"#" (~["\n","\r"])* ("\n"|"\r")>
+| <"/*" (~["*"])* "*" (~["*","/"] (~["*"])* "*" | "*")* "/">
+
+}
+TOKEN:
+{
+  < DOUBLE: (<DIGIT>)+ ( "." (<DIGIT>)+ )? >
+| < DIGIT: ["0"-"9"] >
+| < DOUBLEPOINT: ":" >
+| < COMMA: "," >
+| < SEMICOLON: ";" >
+| < LEFT_PAREN: "(" >
+| < RIGHT_PAREN: ")" >
+| < LEFT_BRACKET: "[" >
+| < RIGHT_BRACKET: "]" >
+| < LEFT_BRACE: "{" >
+| < EQUALS: "=" >
+| < RIGHT_BRACE: "}" >
+| < DOT: "." >
+| < EOL : "\n" | "\r" | "\r\n" >
+| < INC : "include" >
+| < LOAD : "load" >
+| < REQUIRE : "require" >
+| < QUOTE:"\"" > : STRING_STATE
+| < IF: "if" >
+| < IS: "is" (<ID>)+ >
+| < HEREDOC_JAVA: "```java" > : HEREDOC_JAVA_STATE
+| < HEREDOC_JAVA_INLINE: "`" > : HEREDOC_JAVA_INLINE_STATE
+| < HEREDOC_BASH: "```bash" > : HEREDOC_BASH_STATE
+| < ELSE: "else" >
+| < DOUBLE_ARROW: "=>" >
+| < ARROW: "->" >
+| < ID: ["a"-"z","A"-"Z"] ( ["a"-"z","A"-"Z","_","0"-"9"] )* >
+}
+TOKEN_MGR_DECLS :
+{
+
+}
+<HEREDOC_JAVA_STATE> TOKEN: { <END_HEREDOC_JAVA: (~["`"])* "```" > : DEFAULT}
+<HEREDOC_BASH_STATE> TOKEN: { <END_HEREDOC_BASH: (~["`"])* "```" > : DEFAULT}
+<HEREDOC_JAVA_INLINE_STATE> TOKEN: { <END_HEREDOC_JAVA_INLINE: (~["`"])* "`" > : DEFAULT}
+
+
+<STRING_STATE> MORE:
+{
+  "\\" : ESC_STATE
+}
+
+<STRING_STATE> TOKEN:
+{
+  <ENDQUOTE:<QUOTE>> : DEFAULT
+| <CHAR:~["\"","\\"]>
+}
+
+<ESC_STATE> TOKEN:
+{
+  <CNTRL_ESC:["\"","\\","/","b","f","n","r","t"]> : STRING_STATE
+}
+
+
+String Root() :
+{
+ StringBuilder mainContent = new StringBuilder();
+ String tmp = "";
+}
+{
+    (
+        (<EOL>)*
+	    tmp=line() {mainContent.append(tmp).append(";\n");}
+        (<EOL>)*
+	)*
+	<EOF>
+	{
+        if(this.renderClass) {
+            return "import org.alindner.cish.lang.*; import org.alindner.cish.lang.predicate.*; import static org.alindner.cish.lang.predicate.Is.*;   public class Main { public static void main(String... args) throws Exception { "+mainContent.toString()+"}}";
+        } else {
+        	return mainContent.toString();
+        }
+    }
+}
+
+String line() :
+{
+    String s = "";
+}
+{
+    (
+        s=load()
+        |
+        s=heredoc()
+        |
+        s=ifElse()
+        |
+        s=objectCall()
+        |
+        s=variable()
+        |
+        s=COMMAND_WITH_PAREN()
+        |
+        s=COMMAND_WITHOUT_PAREN()
+    )
+    {return s; }
+}
+
+String load():
+{
+    Token s;
+    String str = "";
+}
+{
+    (
+        (
+            <INC>
+            <LEFT_PAREN>
+            str=string()
+            {
+                try {
+                	CishCompiler c = new CishCompiler(log.isDebugEnabled(),base).compile(Utils.loadTextContent(str),false); //todo
+                    str = c.getContent();
+                    imports.addAll(c.getImports());
+                    require.addAll(c.getRequires());
+                } catch (IOException e) {
+                 log.error("Error when including file",e);
+                }
+            }
+            <RIGHT_PAREN>
+        )
+        |
+        (
+            <REQUIRE>
+            <LEFT_PAREN>
+            str=string()
+            {
+                require.add(str);
+                File b = Utils.getCompileDirOfShellScript(base,new File(str));
+                str="CishUtils.require(\""+base.getAbsolutePath()+"\",\""+b.getAbsolutePath().replaceAll(base.getAbsolutePath(),"")+"\");";
+            }
+            <RIGHT_PAREN>
+        )
+        |
+         (
+            <LOAD>
+            <LEFT_PAREN>
+            str=string() {loads.add(str);}
+            [
+               (
+                    <COMMA> [<EOL>]
+                    <LEFT_BRACKET> [<EOL>]
+                    str=string() {imports.add(str);}
+                   [<EOL>]
+                    (
+                        <COMMA>
+                        [<EOL>]
+                        str=string() {imports.add(str);}
+                        [<EOL>]
+                    )*
+                    <RIGHT_BRACKET>
+                    [<EOL>]
+                )
+                |
+                (
+                <COMMA> [<EOL>]
+                "*" {imports.add("*."+str);}
+                )
+            ]
+            <RIGHT_PAREN>
+            {str="";}
+        )
+
+    )
+     [<SEMICOLON>]
+     [<EOL>]
+     {return str;}
+}
+String heredoc():
+{
+    Token s;
+}
+{
+
+    <HEREDOC_JAVA>
+    s=<END_HEREDOC_JAVA>
+    {
+        String str = s.toString();
+        if (str != null && str.length() > 0 && str.endsWith("```")) { //improve with javacc functionality
+            str = str.substring(0, str.length() - 3);
+        }
+        java.add(str);
+        return "";
+    }
+    |
+    <HEREDOC_BASH>
+    s=<END_HEREDOC_BASH>
+    {
+        String str = s.toString();
+        if (str != null && str.length() > 0 && str.endsWith("```")) { //improve with javacc functionality
+            str = str.substring(0, str.length() - 3);
+        }
+
+        String fileName = Utils.md5(str);
+        bash.put(fileName,str);
+        return String.format("Bash.runScript(\"%s\",\"%s\");",base.getAbsolutePath(), fileName);
+
+        return "";
+    }
+    |
+    <HEREDOC_JAVA_INLINE>
+    s=<END_HEREDOC_JAVA_INLINE>
+    {
+       String str = s.toString();
+       if (str != null && str.length() > 0 && str.charAt(str.length() - 1) == '`') { //improve with javacc functionality
+           str = str.substring(0, str.length() - 1);
+       }
+       return str;
+    }
+}
+String lambda():
+{
+    StringBuilder n = new StringBuilder();
+    String s;
+    Token t;
+    List<String> tmpVariables = new ArrayList<>();
+}
+{
+    (
+    {tmpVariables.addAll(variables);}
+    <LEFT_PAREN> {n.append("(");}
+    [t=<ID> {n.append(t.toString());}]
+    (<COMMA> t=<ID> {n.append(t.toString());})*
+    <RIGHT_PAREN>
+    ( <DOUBLE_ARROW> | <ARROW> )
+    <LEFT_BRACE> {n.append(") -> {");}
+    |
+    <LEFT_BRACE> {n.append("(it) -> {");}
+    )
+
+    [<EOL>]
+    (
+        s=line() {n.append(s).append(";");}
+        (<EOL> | <SEMICOLON> )*
+    )*
+    [<EOL>]
+    <RIGHT_BRACE>   {n.append("}");}
+    {variables.clear(); variables.addAll(tmpVariables);}
+    {return n.toString();}
+}
+String objectCall():
+{
+    StringBuilder n = new StringBuilder();
+    String name;
+    String s;
+    Token t;
+}
+{
+    (
+        (
+            s=namespace()
+            <DOT>
+            t=<IS> {n.append("Is.is("+s+", Predicates."+t.toString()+"())");}
+            <LEFT_PAREN>
+            <RIGHT_PAREN>
+        )
+        |
+        (
+            (
+                s=namespace()
+                {
+                    if(this.variables.contains(s) || s.equals("it") || s.equals("file")) {
+                        n.append(s);
+                    } else {
+                           throw new ParseException(String.format("The variable was not declared. Given variable was '%s'. Declared variables are %s", s, this.variables));
+                    }
+                }
+                |
+                s=newObject()
+                |
+                s=COMMAND_WITH_PAREN()
+                |
+                s=COMMAND_WITHOUT_PAREN()
+            )
+            (s=chain() {n.append(s);})+
+        )
+    )
+    (<SEMICOLON> )*
+    {return n.toString(); }
+}
+String chain():
+{
+    StringBuilder n = new StringBuilder();
+    String na;
+    String s;
+}
+{
+    <DOT>
+    na=name() {n.append(".").append(na);}
+    <LEFT_PAREN> {n.append("(");}
+    [
+        (
+            s=parameter() {n.append(s).append(",");}
+            <COMMA>
+        )*
+        s=parameter(){n.append(s);}
+    ]
+    <RIGHT_PAREN> {n.append(")");}
+    {return n.toString();}
+}
+String COMMAND_WITHOUT_PAREN():
+{
+    StringBuilder n = new StringBuilder();
+    String ns;
+    String na;
+    String s;
+}
+{
+    ns=namespace() {n.append(ns);}
+    <DOUBLEPOINT>
+    <DOUBLEPOINT>
+    na=name() {n.append(".").append(na).append("()");}
+    (s=chain() {n.append(s);})*
+    (<SEMICOLON> )*
+    {return n.toString(); }
+}
+String COMMAND_WITH_PAREN():
+{
+     StringBuilder n = new StringBuilder();
+     String ns;
+     String na;
+     String s;
+}
+{
+    ns=namespace() {n.append(ns);}
+    <DOUBLEPOINT>
+    <DOUBLEPOINT>
+    na=name() {n.append(".").append(na);}
+    <LEFT_PAREN> {n.append("(");}
+    [
+        (
+            s=parameter() {n.append(s).append(",");}
+            <COMMA>
+        )*
+        s=parameter(){n.append(s);}
+    ]
+    <RIGHT_PAREN> {n.append(")");}
+    (s=chain() {n.append(s);})*
+    (<SEMICOLON> )*
+    {return n.toString(); }
+}
+String parameter():
+{
+      StringBuilder n = new StringBuilder();
+      Token s;
+      String str;
+}
+{
+    (
+        s=<DOUBLE> {n.append(s.toString());}
+        |
+        str=string() { n.append("\"").append(str).append("\"");}
+        |
+        str=line()  {n.append(str);}
+        |
+        s=<ID> {n.append(s.toString());}
+        |
+        str=newObject()  {n.append(str);}
+        |
+        str=lambda() {n.append(str); }
+    )
+    {return n.toString(); }
+}
+String newObject():
+{
+       StringBuilder n = new StringBuilder();
+       Token t;
+       String s;
+}
+{
+    "new "
+    t=<ID>  { n.append("new ").append(t.toString()).append("(");}
+    [
+        <LEFT_PAREN>
+        [
+            (
+                s=parameter() {n.append(s).append(",");}
+                <COMMA>
+            )*
+            s=parameter() {n.append(s);}
+        ]
+        <RIGHT_PAREN>
+    ] {n.append(")");}
+    (
+        <DOT> {n.append(".");}
+        t=<ID>  { n.append(t.toString());}
+        <LEFT_PAREN> {n.append("(");}
+        [
+            (
+                s=parameter() {n.append(s).append(",");}
+                <COMMA>
+            )*
+            s=parameter()
+            {n.append(s);}
+        ]
+        <RIGHT_PAREN> {n.append(")");}
+    )*
+    (<SEMICOLON> )*
+    {return n.toString(); }
+}
+String variable():
+{
+    Token token;
+    String s;
+    StringBuilder n = new StringBuilder();
+}
+{
+    token=<ID>
+    {
+        String str = token.toString();
+        if(variables.contains(str)) {
+            n.append(str);
+        }else{
+        	variables.add(str);
+            n.append("var ").append(str);
+        }
+    }
+    <EQUALS>
+    s=parameter() {n.append("=").append(s);}
+    (<SEMICOLON>)*
+    {return n.toString(); }
+}
+
+String ifElse() :
+{
+  String cond = "";
+  String s = "";
+  StringBuilder n = new StringBuilder();
+}
+{
+    <IF> <LEFT_PAREN> cond = condition() <RIGHT_PAREN> [<EOL>] <LEFT_BRACE> [<EOL>] {n.append("ControlStructures.when(").append(cond).append(", () -> {");}
+    (
+        (
+	    s = ifElse() {n.append(s).append(";");}
+        |
+        s = line() {n.append(s).append(";");}
+        ) [<EOL>]
+    )*  {n.append("}");}
+    <RIGHT_BRACE> [<EOL>]
+    (
+        <ELSE> [<EOL>] <LEFT_BRACE> [<EOL>] {n.append(", () -> {");}
+        (
+            (
+            s = ifElse() {n.append(s).append(";");}
+            |
+            s = line() {n.append(s).append(";");}
+            ) [<EOL>]
+        )*  {n.append("}");}
+        <RIGHT_BRACE> [<EOL>]
+    )?
+    {return n.append(")").toString();}
+}
+
+String condition():
+{
+      String s = "";
+}
+{
+    s = line()
+    {return s;}
+}
+
+String namespace():
+{
+    Token s;
+}
+{
+    s=<ID> { return s.toString();}
+}
+
+String name():
+{
+    Token s;
+}
+{
+    s=<ID> { return s.toString();}
+}
+
+/**
+ * Match a quoted string.
+ https://stackoverflow.com/a/12011336/9479657
+ */
+String string() :
+{
+  StringBuilder builder = new StringBuilder();
+}
+{
+  <QUOTE> ( getChar(builder) )* <ENDQUOTE>
+  {
+    return builder.toString();
+  }
+}
+
+/**
+ * Match char inside quoted string.
+ */
+void getChar(StringBuilder builder):
+{
+  Token t;
+}
+{
+  ( t = <CHAR> | t = <CNTRL_ESC> )
+  {
+    if (t.image.length() < 2)
+    {
+      // CHAR
+      builder.append(t.image.charAt(0));
+    }
+    else if (t.image.length() < 6)
+    {
+      // ESC
+      char c = t.image.charAt(1);
+      switch (c)
+      {
+        case 'b': builder.append((char) 8); break;
+        case 'f': builder.append((char) 12); break;
+        case 'n': builder.append((char) 10); break;
+        case 'r': builder.append((char) 13); break;
+        case 't': builder.append((char) 9); break;
+        default: builder.append(c);
+      }
+    }
+  }
+}

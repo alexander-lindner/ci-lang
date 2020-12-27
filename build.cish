@@ -1,0 +1,15 @@
+#!/usr/bin/cish
+#-ldebug
+
+INTERPRETER="target/cish2"
+Maven::clean()
+Maven::pkg()
+
+IO::removeIfExists(INTERPRETER)
+
+IO::setContent(INTERPRETER, "#!/usr/bin/java -jar \\n")
+IO::addContent(INTERPRETER, IO::getContent("interpreter/target/interpreter-0.1-SNAPSHOT-jar-with-dependencies.jar"))
+IO::executable(INTERPRETER,true)
+
+IO::copy(INTERPRETER,"docker/build")
+Docker::build("docker/build","alexanderlindner/cish:latest")
