@@ -20,7 +20,6 @@
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="ci-lang" target="8" />
-      <module name="interpreter" target="9" />
     </bytecodeTargetLevel>
   </component>
 </project>

@@ -1,3 +1,5 @@
+![ci](https://github.com/alexander-lindner/ci-lang/workflows/ci/badge.svg)
+
 ```bash
 ./build.sh
 docker run -ti --rm --volume $(pwd):/build -w /build alexanderlindner/cish:latest bash
