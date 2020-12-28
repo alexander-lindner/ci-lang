@@ -51,6 +51,7 @@ jobs:
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
   main-cish:
+    runs-on: ubuntu-latest
     container:
       image: octocat/ci-image:latest
     steps:
