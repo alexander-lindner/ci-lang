@@ -7,7 +7,7 @@ module.exports =
 
 const core = __webpack_require__(186);
 const github = __webpack_require__(438);
-const http = __webpack_require__(925);
+const httpc = __webpack_require__(925);
 
 const fs = __webpack_require__(747);
 
@@ -27,7 +27,7 @@ function copy(callback) {
 async function downloadFile(version, callback) {
     const file = fs.createWriteStream("cish");
 
-    const http = new http.HttpClient('actions-cish', undefined, {
+    const http = new httpc.HttpClient('actions-cish', undefined, {
         allowRetries: true,
         maxRetries: 3
     });

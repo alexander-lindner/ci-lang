@@ -1,6 +1,6 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
-const http = require('@actions/http-client');
+const httpc = require('@actions/http-client');
 
 const fs = require('fs');
 
@@ -20,7 +20,7 @@ function copy(callback) {
 async function downloadFile(version, callback) {
     const file = fs.createWriteStream("cish");
 
-    const http = new http.HttpClient('actions-cish', undefined, {
+    const http = new httpc.HttpClient('actions-cish', undefined, {
         allowRetries: true,
         maxRetries: 3
     });
