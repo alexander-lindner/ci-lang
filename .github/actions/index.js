@@ -53,7 +53,7 @@ try {
         }
         core.debug("Cish successfully installed");
     };
-    downloadFile("v0.3.0", callback);
+    downloadFile(version, callback);
 } catch (error) {
     core.setFailed(error.message);
 }
