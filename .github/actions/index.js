@@ -1,21 +1,9 @@
-const core = require('@actions/core');
-const github = require('@actions/github');
-const httpc = require('@actions/http-client');
+const fs = require('fs'),
+    core = require('@actions/core'),
+    github = require('@actions/github'),
+    httpc = require('@actions/http-client'),
+    exec = require('@actions/exec').exec;
 
-const fs = require('fs');
-
-function copy(callback) {
-    let oldPath = "cish",
-        newPath = "/bin/cish",
-        readStream = fs.createReadStream(oldPath),
-        writeStream = fs.createWriteStream(newPath);
-    readStream.on('error', callback);
-    writeStream.on('error', callback);
-
-    readStream.on('close', () => fs.unlink(oldPath, callback));
-
-    readStream.pipe(writeStream);
-}
 
 async function downloadFile(version, callback) {
     const file = fs.createWriteStream("cish");
@@ -33,19 +21,21 @@ async function downloadFile(version, callback) {
         const message = `Unexpected HTTP status code '${response.message.statusCode}' when retrieving versions from '${url}'. ${body}`.trim();
         throw new Error(message);
     } else {
-        response.message.pipe(file).on('close', () => {
+        response.message.pipe(file).on('close', async () => {
             file.close();
-            fs.rename("cish", "/bin/cish", (err) => {
-                if (err) {
-                    if (err.code === 'EXDEV') {
-                        copy(callback);
-                    } else {
-                        callback(err);
+            let options = {
+                listeners: {
+                    stdout: (data) => {
+                        core.info(data.toString().trim());
+                    },
+                    stderr: (data) => {
+                        core.error(data.toString().trim());
                     }
-                    return;
                 }
-                callback();
-            });
+            };
+            await exec("sudo mv cish /bin/", [], options);
+            await exec("sudo chmod +x /bin/cish", [], options);
+            callback();
         })
     }
 }
