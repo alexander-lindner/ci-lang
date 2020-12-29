@@ -71,9 +71,12 @@ jobs:
         with:
           java-version: 15
 
+      - name: Checkout
+        uses: actions/checkout@v2
+
       - name: setup cish
         uses: ./.github/actions
-        
+
       - name: Cache local Maven repository
         uses: actions/cache@v2
         with:
@@ -82,8 +85,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      - name: Checkout
-        uses: actions/checkout@v2
+
 
       - name: build
         run: ./build.cish
