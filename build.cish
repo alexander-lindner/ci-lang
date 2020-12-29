@@ -1,4 +1,4 @@
-#!/usr/bin/cish
+#!/bin/cish
 #-ldebug
 
 INTERPRETER="target/cish"

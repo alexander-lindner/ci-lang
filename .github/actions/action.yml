@@ -1,0 +1,10 @@
+name: 'Setup Cish'
+description: 'Setup cish'
+inputs:
+  version:
+    description: 'Version of cish'
+    required: true
+    default: 'v0.3.0'
+runs:
+  using: 'node12'
+  main: 'dist/index.js'
