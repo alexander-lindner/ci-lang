@@ -75,6 +75,7 @@ public class Maven {
 		request.setBaseDirectory(new File(""));
 		request.setGoals(Arrays.asList(cmds));
 
+		new File(".mvn/local_repository").mkdirs();
 		final Invoker invoker = new DefaultInvoker();
 		invoker.setLocalRepositoryDirectory(new File(".mvn/local_repository"));
 		final File mvn = new File(".mvn/home/bin/mvn");
