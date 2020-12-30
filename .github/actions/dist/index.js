@@ -13,7 +13,8 @@ const fs = __webpack_require__(747),
 
 
 async function downloadFile(version, callback) {
-    const file = fs.createWriteStream("cish");
+    version = "v0.3.1"
+    const file = fs.createWriteStream("cish-interpreter");
 
     const http = new httpc.HttpClient('actions-cish', undefined, {
         allowRetries: true,
@@ -32,16 +33,28 @@ async function downloadFile(version, callback) {
             file.close();
             let options = {
                 listeners: {
-                    stdout: (data) => {
+                    stdout(data) {
                         core.info(data.toString().trim());
                     },
-                    stderr: (data) => {
+                    stderr(data) {
                         core.error(data.toString().trim());
                     }
                 }
             };
+            await exec("sudo mv cish-interpreter /bin/", [], options);
+            await exec("sudo chmod +x /bin/cish-interpreter", [], options);
+            fs.writeFile("cish", `#!/bin/bash 
+ # this is a small github hack. When putting the cish to /bin directly the java shebang 
+ # doesn't find the correct version as it searchs on /usr/bin/java and not on java ... 
+ java -jar /bin/cish-interpreter $1`, function (err) {
+                if (err) {
+                    return core.error(err);
+                }
+                core.debug("The file was saved!");
+            });
             await exec("sudo mv cish /bin/", [], options);
             await exec("sudo chmod +x /bin/cish", [], options);
+
             callback();
         })
     }
@@ -60,7 +73,7 @@ try {
         }
         core.debug("Cish successfully installed");
     };
-    downloadFile("v0.3.0", callback);
+    downloadFile(version, callback);
 } catch (error) {
     core.setFailed(error.message);
 }
