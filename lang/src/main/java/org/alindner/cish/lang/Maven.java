@@ -16,7 +16,10 @@ import java.util.List;
  */
 @Log4j2
 public class Maven {
-
+	final static File cacheRepository = new File(".cish/cache/mvn/local_repository");
+	static {
+		Maven.cacheRepository.mkdirs();
+	}
 	/**
 	 * Maven clean command
 	 */
@@ -75,10 +78,10 @@ public class Maven {
 		request.setBaseDirectory(new File(""));
 		request.setGoals(Arrays.asList(cmds));
 
-		new File(".mvn/local_repository").mkdirs();
+
 		final Invoker invoker = new DefaultInvoker();
-		invoker.setLocalRepositoryDirectory(new File(".mvn/local_repository"));
-		final File mvn = new File(".mvn/home/bin/mvn");
+		invoker.setLocalRepositoryDirectory(Maven.cacheRepository);
+		final File mvn = new File(".cish/mvn_home/bin/mvn");
 		final List<File> wrapperFiles = Arrays.asList(
 				new File("./mvnw"),
 				new File(".mvn/wrapper/maven-wrapper.jar"),

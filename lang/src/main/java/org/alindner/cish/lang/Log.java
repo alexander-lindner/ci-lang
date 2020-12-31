@@ -2,20 +2,20 @@ package org.alindner.cish.lang;
 
 import lombok.extern.log4j.Log4j2;
 
-import java.io.IOException;
-
 /**
  * the log and print class of all included classes
  */
 @Log4j2
 public class Log {
+	static boolean stopOnError = true;
+
 	/**
 	 * log an exception
 	 *
 	 * @param msg message
 	 * @param e   exception
 	 */
-	public static void exception(final String msg, final IOException e) {
+	public static void exception(final String msg, final Exception e) {
 		Log.error(msg, e);
 	}
 
@@ -25,8 +25,11 @@ public class Log {
 	 * @param msg message
 	 * @param e   exception
 	 */
-	static void internal(final String msg, final IOException e) {
+	static void internal(final String msg, final Exception e) {
 		Log.error(String.format("Cish Error: %s", msg), e);
+		if (Log.stopOnError) {
+			throw new Error("Stopped executing during error");
+		}
 	}
 
 	/**
@@ -35,8 +38,22 @@ public class Log {
 	 * @param msg message
 	 * @param e   exception
 	 */
-	public static void error(final String msg, final IOException e) {
+	public static void error(final String msg, final Exception e) {
 		Log.log.error(msg, e);
+		if (Log.stopOnError) {
+			throw new Error("Stopped executing during error");
+		}
+	}
+
+	/**
+	 * log an error
+	 *
+	 * @param msg message
+	 * @param e   exception
+	 */
+	public static void fatal(final String msg, final Exception e) {
+		Log.log.fatal(msg, e);
+		throw new Error("Stopped executing during a fatal error");
 	}
 
 	/**
@@ -46,6 +63,9 @@ public class Log {
 	 */
 	static void internal(final String msg) {
 		Log.log.error(String.format("Cish Error: %s", msg));
+		if (Log.stopOnError) {
+			throw new Error("Stopped executing during error");
+		}
 	}
 
 	/**

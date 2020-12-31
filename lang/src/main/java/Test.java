@@ -8,6 +8,8 @@ import java.util.function.Function;
 
 public class Test {
 	public static void test() {
+
+
 		final Array<CiFile> list = new Array<>();
 		list.add(new CiFile("start.zip"));
 		list.add(new CiFile("stop.zip"));

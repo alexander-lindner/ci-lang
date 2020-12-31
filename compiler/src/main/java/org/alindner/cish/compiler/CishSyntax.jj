@@ -86,6 +86,7 @@ TOKEN:
 | < ELSE: "else" >
 | < DOUBLE_ARROW: "=>" >
 | < ARROW: "->" >
+| < PLUS: "+" >
 | < ID: ["a"-"z","A"-"Z"] ( ["a"-"z","A"-"Z","_","0"-"9"] )* >
 }
 TOKEN_MGR_DECLS :
@@ -411,7 +412,7 @@ String parameter():
     (
         s=<DOUBLE> {n.append(s.toString());}
         |
-        str=string() { n.append("\"").append(str).append("\"");}
+        str=stringConcatenated() {n.append(str);}
         |
         str=line()  {n.append(str);}
         |
@@ -538,6 +539,40 @@ String name():
     s=<ID> { return s.toString();}
 }
 
+String stringConcatenated():
+{
+    StringBuilder s = new StringBuilder();
+    String str;
+    Token token;
+}
+{
+    (
+        str=string() { s.append("\"").append(str).append("\"");}
+        |
+        (
+            str=string() { s.append("\"").append(str).append("\"");}
+            |
+            token=<DOUBLE> {s.append(token.toString());}
+            |
+            token=<ID> {s.append(token.toString()).append(".toString()");}
+        )
+        (
+            [<EOL>]
+            <PLUS> { s.append("+");}
+            [<EOL>]
+            (
+                str=string() { s.append("\"").append(str).append("\"");}
+                |
+                token=<DOUBLE> {s.append(token.toString());}
+                |
+                token=<ID> {s.append(token.toString()).append(".toString()");}
+            )
+        )+
+     )
+ {
+    return s.toString();
+  }
+}
 /**
  * Match a quoted string.
  https://stackoverflow.com/a/12011336/9479657

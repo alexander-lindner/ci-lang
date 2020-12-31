@@ -34,25 +34,30 @@ Docker::build("docker/build","alexanderlindner/cish:latest")
 * more default libs
 * function support (which isn't easy)
 * github ci support
+* FTP / SFTP / Webdav support
+* SSH Support
+* ENV lib
+* git support
+* zip / tar / ... support
+* dpkg-build support
+* Regex/sed support
+* jar support
+* parameter support
+* curl & Json/XMl support
+* OS tools like hostname, ip addr, ...
 
 ## Snippets
 
 ```bash
-./build.sh
-docker run -ti --rm --volume $(pwd):/build -w /build alexanderlindner/cish:latest bash
-./build.cish
-
-
-docker build -t alexanderlindner/cish:latest docker/build
-
-#echo '#!/usr/bin/java --source 12 -cp target/ci-interpreter-0.1-SNAPSHOT-jar-with-dependencies.jar' >$INTERPRETER
-#cat <<EOF >>$INTERPRETER
-#import java.io.*;
-#public class Wrapper {
-#  public static void main(final String... args) throws IOException {
-#    new org.alindner.cish.interpreter.Interpreter(args);
-#  }
-#}
-#EOF
-#chmod +x $INTERPRETER
+echo '#!/usr/bin/java --source 12 -cp target/ci-interpreter-0.1-SNAPSHOT-jar-with-dependencies.jar' >$INTERPRETER
+INTERPRETER="target/cish"
+cat <<EOF >>INTERPRETER
+import java.io.*;
+public class Wrapper {
+  public static void main(final String... args) throws IOException {
+    new org.alindner.cish.interpreter.Interpreter(args);
+  }
+}
+EOF
+chmod +x INTERPRETER
 ```

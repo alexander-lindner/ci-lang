@@ -1,12 +1,12 @@
 package org.alindner.cish.lang;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.List;
 
@@ -39,40 +39,13 @@ public class CiFile extends File {
 	/**
 	 * touch a file
 	 *
-	 * @param file      file
-	 * @param timestamp last modified timestamp
-	 */
-	private static void touch(final File file, final long timestamp) {
-		if (!file.exists()) {
-			try {
-				new FileOutputStream(file).close();
-			} catch (final IOException e) {
-				Log.internal("Couldn't touch file", e);
-				//todo add alternative
-			}
-		}
-
-		file.setLastModified(timestamp);
-	}
-
-	/**
-	 * touch / create a given file
-	 */
-	public static void touch(final CiFile file) {
-		final long timestamp = System.currentTimeMillis();
-		CiFile.touch(file, timestamp);
-	}
-
-	/**
-	 * touch a file
-	 *
 	 * @param file file
 	 *
 	 * @return created CiFile of given string path
 	 */
 	public CiFile touch(final String file) {
 		final CiFile f = new CiFile(this, file);
-		CiFile.touch(f);
+		IO.touch(f);
 		return f;
 	}
 
@@ -148,6 +121,21 @@ public class CiFile extends File {
 			Log.internal("Couldn't create path");
 		}
 		return f;
+	}
+
+	/**
+	 * append the text content of a file
+	 *
+	 * @param content content
+	 */
+	public void addContent(final String content) {
+		final List<String> lines = Arrays.asList(content.split("\n"));
+		final Path         file  = Paths.get(this.getAbsolutePath());
+		try {
+			Files.write(file, lines, StandardOpenOption.APPEND);
+		} catch (final IOException e) {
+			Log.internal("Couldn't create file", e);
+		}
 	}
 
 	/**
