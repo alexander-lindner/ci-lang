@@ -7,6 +7,8 @@ on:
 jobs:
   main:
     runs-on: ubuntu-latest
+    if: (jobs. main-cish.status == 'failure')
+    needs: main-cish
     steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -87,7 +89,7 @@ jobs:
       - name: Cache local cish cache repository
         uses: actions/cache@v2
         with:
-          path: ~/.cish/
+          path: ./.cish/
           key: ${{ runner.os }}-maven-${{ hashFiles('**/build.cish') }}
           restore-keys: |
             ${{ runner.os }}-cish-
