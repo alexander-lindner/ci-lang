@@ -13,7 +13,6 @@ const fs = __webpack_require__(747),
 
 
 async function downloadFile(version, callback) {
-    version = "v0.3.1"
     const file = fs.createWriteStream("cish-interpreter");
 
     const http = new httpc.HttpClient('actions-cish', undefined, {

@@ -6,7 +6,6 @@ const fs = require('fs'),
 
 
 async function downloadFile(version, callback) {
-    version = "v0.3.1"
     const file = fs.createWriteStream("cish-interpreter");
 
     const http = new httpc.HttpClient('actions-cish', undefined, {
