@@ -8,6 +8,8 @@ import net.sourceforge.argparse4j.inf.Namespace;
 import org.alindner.cish.compiler.Compiler;
 import org.alindner.cish.compiler.ParseException;
 import org.alindner.cish.compiler.Utils;
+import org.alindner.cish.lang.CiFile;
+import org.alindner.cish.lang.Parameter;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.config.Configurator;
 
@@ -21,16 +23,22 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
 @Log4j2
 public class Interpreter {
-	private final boolean   debug;
-	private final boolean   verbose;
-	private       Namespace args = null;
+	protected final List<String>        argsList         = new ArrayList<>();
+	protected final Map<String, String> parameters       = new HashMap<>();
+	protected final List<String>        simpleParameters = new ArrayList<>();
+	private final   boolean             debug;
+	private final   boolean             verbose;
+	private         Namespace           args             = null;
 
-	public Interpreter(final String[] args) throws IOException, ParseException, NoSuchAlgorithmException {
+	public Interpreter(final String[] args) throws IOException, ParseException {
 		this.parse(args);
 		switch (this.args.getString("log").toLowerCase()) {
 			case "debug":
@@ -55,7 +63,7 @@ public class Interpreter {
 		Interpreter.readInput().forEach(Interpreter.log::debug);
 	}
 
-	public static void main(final String[] args) throws IOException, ParseException, NoSuchAlgorithmException {
+	public static void main(final String[] args) throws IOException, ParseException {
 		new Interpreter(args);
 	}
 
@@ -76,37 +84,74 @@ public class Interpreter {
 		meth.invoke(null, (Object) params);
 	}
 
-	private void loadFiles() throws IOException, ParseException, NoSuchAlgorithmException {
-
+	private void loadFiles() throws IOException, ParseException {
 		for (final String fileName : this.args.<String>getList("file")) {
 			final File                f   = new File(fileName);
 			final Map<String, String> map = new Compiler(this.debug, f).loadScriptToMemory().compileCish().compileJava().getJavaContent();
 			try {
 				Interpreter.load(f);
 			} catch (final ClassNotFoundException | IllegalAccessException | MalformedURLException | NoSuchMethodException | InvocationTargetException | NoSuchAlgorithmException e) {
-				e.printStackTrace(); //todo
+				Interpreter.log.fatal(e);
 			}
 		}
 	}
 
-	private void parse(final String[] args) {
+	protected void parse(final String[] args) {
 		final ArgumentParser parser = ArgumentParsers.newFor("cish")
 		                                             .build()
 		                                             .defaultHelp(true)
 		                                             .description("The shell for ci purpose.");
 		parser.addArgument("-l", "--log")
 		      .choices("info", "debug", "error").setDefault("error")
-		      .help("Output more informations");
+		      .help("Set the default log level of the script");
 		parser.addArgument("file")
 		      .nargs(1)
 		      .help("File to interpret");
-
 		try {
-			this.args = parser.parseArgs(args);
+			final ArrayList<String> list = new ArrayList<>();
+			this.args = parser.parseKnownArgs(args, list);
+			this.parseScriptParameters(list);
+			Parameter.params = this.simpleParameters;
+			Parameter.simpleArgs = this.argsList;
+			Parameter.extendedParams = this.parameters;
+			Parameter.script = new CiFile(this.args.<String>getList("file").get(0));
 		} catch (final ArgumentParserException e) {
 			parser.handleError(e);
 			System.exit(1);
 		}
+	}
+
+	void parseScriptParameters(final List<String> args) {
+		if (args.size() < 1) {
+			return;
+		}
+		final String argument = args.get(0);
+		if (argument.charAt(0) == '-') {
+
+			if (argument.charAt(1) == '-') {
+				if (argument.length() > 3) {
+					if (argument.contains("=")) {
+						final String[] split = argument.split("=");
+						this.parameters.put(split[0].substring(2), split[1]);
+					} else {
+						if (args.size() - 1 == 0) {
+							throw new IllegalArgumentException("Expected arg after: " + argument);
+						}
+						this.parameters.put(argument.substring(2), args.get(1));
+						args.remove(0);
+					}
+					args.remove(0);
+				}
+			} else {
+				this.simpleParameters.add(argument.substring(1));
+				args.remove(0);
+			}
+
+		} else {
+			this.argsList.add(argument);
+			args.remove(0);
+		}
+		this.parseScriptParameters(args);
 	}
 }
 

@@ -126,7 +126,7 @@ String Root() :
 	    tmp=line() {mainContent.append(tmp).append(";\n");}
         (<EOL>)*
 	)*
-	<EOF>
+	[<EOF>]
 	{
         if(this.renderClass) {
             return "import org.alindner.cish.lang.*; import org.alindner.cish.lang.predicate.*; import static org.alindner.cish.lang.predicate.Is.*;   public class Main { public static void main(String... args) throws Exception { "+mainContent.toString()+"}}";
@@ -391,12 +391,14 @@ String COMMAND_WITH_PAREN():
     na=name() {n.append(".").append(na);}
     <LEFT_PAREN> {n.append("(");}
     [
+       [<EOL>]
         (
-            s=parameter() {n.append(s).append(",");}
-            <COMMA>
+            s=parameter() {n.append(s).append(",");} [<EOL>] <COMMA> [<EOL>]
         )*
+        [<EOL>]
         s=parameter(){n.append(s);}
     ]
+    [<EOL>]
     <RIGHT_PAREN> {n.append(")");}
     (s=chain() {n.append(s);})*
     (<SEMICOLON> )*
@@ -421,6 +423,10 @@ String parameter():
         str=newObject()  {n.append(str);}
         |
         str=lambda() {n.append(str); }
+        |
+        str=COMMAND_WITH_PAREN() {n.append(str); }
+        |
+        str=COMMAND_WITHOUT_PAREN() {n.append(str); }
     )
     {return n.toString(); }
 }

@@ -5,6 +5,7 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.List;
 
 /**
  * Interaction to the console / screen
@@ -20,6 +21,15 @@ public class Console {
 	}
 
 	/**
+	 * print a list
+	 *
+	 * @param value value
+	 */
+	public static void print(final List<?> value) {
+		Console.print(Type.OUTPUT, value.toString());
+	}
+
+	/**
 	 * print a cish file
 	 *
 	 * @param file file
@@ -32,13 +42,47 @@ public class Console {
 						String.format(
 								"[Name:%s, path: %s, size: %s, type: file, executable: %b]",
 								file.getName(),
-								file.getAbsolutePath(),
+								file.getCanonicalPath(),
 								FileUtils.byteCountToDisplaySize(Files.size(file.toPath())),
 								file.executable()
 						)
 				);
 			} catch (final IOException e) {
 				Log.internal("Couldn't retrieve size");
+				try {
+					Console.print(
+							Type.OUTPUT,
+							String.format(
+									"[Name:%s, path: %s, type: file, executable: %b]",
+									file.getName(),
+									file.getCanonicalPath(),
+									file.executable()
+							)
+					);
+				} catch (final IOException ioException) {
+					Log.internal("Couldn't retrieve cleaned file path");
+					Console.print(
+							Type.OUTPUT,
+							String.format(
+									"[Name:%s, path: %s, type: file, executable: %b]",
+									file.getName(),
+									file.getAbsolutePath(),
+									file.executable()
+							)
+					);
+				}
+			}
+		} else {
+			try {
+				Console.print(
+						Type.OUTPUT,
+						String.format(
+								"[path: %s, type: directory]",
+								file.getCanonicalPath()
+						)
+				);
+			} catch (final IOException e) {
+				Log.internal("Couldn't retrieve cleaned file path");
 				Console.print(
 						Type.OUTPUT,
 						String.format(
@@ -49,14 +93,6 @@ public class Console {
 						)
 				);
 			}
-		} else {
-			Console.print(
-					Type.OUTPUT,
-					String.format(
-							"[path: %s, type: directory]",
-							file.getAbsolutePath()
-					)
-			);
 		}
 	}
 

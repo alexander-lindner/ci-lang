@@ -128,6 +128,16 @@ public class CiFile extends File {
 	 *
 	 * @param content content
 	 */
+	public void addContent(final byte[] content) {
+		this.addContent(new String(content));
+	}
+
+	/**
+	 * append the text content of a file
+	 *
+	 * @param content content
+	 */
+
 	public void addContent(final String content) {
 		final List<String> lines = Arrays.asList(content.split("\n"));
 		final Path         file  = Paths.get(this.getAbsolutePath());
@@ -143,6 +153,16 @@ public class CiFile extends File {
 	 *
 	 * @param content content
 	 */
+	public void setContent(final byte[] content) {
+		this.setContent(new String(content));
+	}
+
+	/**
+	 * set the text content of a file
+	 *
+	 * @param content content
+	 */
+
 	public void setContent(final String content) {
 		final List<String> lines = Arrays.asList(content.split("\n"));
 		final Path         file  = Paths.get(this.getAbsolutePath());
