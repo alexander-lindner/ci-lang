@@ -84,7 +84,13 @@ jobs:
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
-
+      - name: Cache local cish cache repository
+        uses: actions/cache@v2
+        with:
+          path: ~/.cish/
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/build.cish') }}
+          restore-keys: |
+            ${{ runner.os }}-cish-
 
 
       - name: build
