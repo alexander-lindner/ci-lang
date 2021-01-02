@@ -1,0 +1,10 @@
+FROM gcr.io/distroless/java:11
+
+MAINTAINER Alexander Lindner <25225552+alexander-lindner@users.noreply.github.com>
+
+WORKDIR /app
+ENV HOME /app
+ADD cish /bin/cish
+
+CMD ["/bin/cish"]
+ENTRYPOINT ["/bin/cish"]
