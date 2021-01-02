@@ -90,7 +90,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ./.cish/
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/build.cish') }}
+          key: ${{ runner.os }}-cish-${{ hashFiles('**/build.cish') }}-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-cish-
 

@@ -2,6 +2,7 @@ package org.alindner.cish.interpreter;
 
 import lombok.extern.log4j.Log4j2;
 import net.sourceforge.argparse4j.ArgumentParsers;
+import net.sourceforge.argparse4j.impl.Arguments;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.Namespace;
@@ -13,10 +14,8 @@ import org.alindner.cish.lang.Parameter;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.config.Configurator;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -27,8 +26,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 
+/**
+ * The public interface for a user of cish to interact with  the compiler and the default library
+ *
+ * @author alindner
+ * @since 0.1.0
+ */
 @Log4j2
 public class Interpreter {
 	protected final List<String>        argsList         = new ArrayList<>();
@@ -38,6 +42,14 @@ public class Interpreter {
 	private final   boolean             verbose;
 	private         Namespace           args             = null;
 
+	/**
+	 * constructors which sets also the log level
+	 *
+	 * @param args arguments
+	 *
+	 * @throws IOException    errors during script reading
+	 * @throws ParseException errors during script parsing
+	 */
 	public Interpreter(final String[] args) throws IOException, ParseException {
 		this.parse(args);
 		switch (this.args.getString("log").toLowerCase()) {
@@ -60,22 +72,33 @@ public class Interpreter {
 		}
 
 		this.loadFiles();
-		Interpreter.readInput().forEach(Interpreter.log::debug);
 	}
 
+	/**
+	 * start the interpreter
+	 *
+	 * @param args all arguments, differentiate as args, (simple) parameter and extended parameter. More Information: {@link Interpreter#parseScriptParameters(List)}, {@link
+	 *             Parameter}. First arg must be the script file
+	 *
+	 * @throws IOException    errors during script reading
+	 * @throws ParseException errors during script parsing
+	 */
 	public static void main(final String[] args) throws IOException, ParseException {
 		new Interpreter(args);
 	}
 
-	private static Stream<String> readInput() throws IOException {
-		final BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-		if (!reader.ready()) {
-			return Stream.empty();
-		} else {
-			return reader.lines();
-		}
-	}
-
+	/**
+	 * invokes the compiled script in its cache directory
+	 *
+	 * @param root the script file
+	 *
+	 * @throws ClassNotFoundException    couldn't find class
+	 * @throws IllegalAccessException    error when invoking script
+	 * @throws MalformedURLException     error when invoking script
+	 * @throws NoSuchMethodException     couldn't find main method
+	 * @throws InvocationTargetException error when invoking script
+	 * @throws NoSuchAlgorithmException  error when invoking script
+	 */
 	public static void load(final File root) throws ClassNotFoundException, IllegalAccessException, MalformedURLException, NoSuchMethodException, InvocationTargetException, NoSuchAlgorithmException {
 		final URLClassLoader classLoader = URLClassLoader.newInstance(new URL[]{Utils.getCompileDirOfShellScript(root).toURI().toURL()});
 		final Class<?>       cls         = Class.forName("Main", true, classLoader);
@@ -84,6 +107,12 @@ public class Interpreter {
 		meth.invoke(null, (Object) params);
 	}
 
+	/**
+	 * loads, compiles and executes the given cish scrips
+	 *
+	 * @throws IOException    couldn't load files
+	 * @throws ParseException couldn't compile the file
+	 */
 	private void loadFiles() throws IOException, ParseException {
 		for (final String fileName : this.args.<String>getList("file")) {
 			final File                f   = new File(fileName);
@@ -96,17 +125,27 @@ public class Interpreter {
 		}
 	}
 
+	/**
+	 * parse all arguments
+	 * <p>
+	 * It will split the arguments to cish arguments and script arguments by first filter the cish parameter out and transfer the leftover arguments to the script
+	 *
+	 * @param args arguments
+	 */
 	protected void parse(final String[] args) {
 		final ArgumentParser parser = ArgumentParsers.newFor("cish")
 		                                             .build()
 		                                             .defaultHelp(true)
+		                                             .version(this.getClass().getPackage().getImplementationVersion())
 		                                             .description("The shell for ci purpose.");
 		parser.addArgument("-l", "--log")
-		      .choices("info", "debug", "error").setDefault("error")
+		      .choices("info", "debug", "error")
+		      .setDefault("error")
 		      .help("Set the default log level of the script");
 		parser.addArgument("file")
 		      .nargs(1)
 		      .help("File to interpret");
+		parser.addArgument("--version").action(Arguments.version());
 		try {
 			final ArrayList<String> list = new ArrayList<>();
 			this.args = parser.parseKnownArgs(args, list);
@@ -121,13 +160,19 @@ public class Interpreter {
 		}
 	}
 
+	/**
+	 * parses the leftover script arguments to args, (simple) parameter and extended parameter. More Information: {@link Parameter}.
+	 *
+	 * @param args arguments
+	 *
+	 * @see Parameter
+	 */
 	void parseScriptParameters(final List<String> args) {
 		if (args.size() < 1) {
 			return;
 		}
 		final String argument = args.get(0);
 		if (argument.charAt(0) == '-') {
-
 			if (argument.charAt(1) == '-') {
 				if (argument.length() > 3) {
 					if (argument.contains("=")) {
@@ -146,7 +191,6 @@ public class Interpreter {
 				this.simpleParameters.add(argument.substring(1));
 				args.remove(0);
 			}
-
 		} else {
 			this.argsList.add(argument);
 			args.remove(0);

@@ -35,6 +35,8 @@
                                     <mainClass>
                                         org.alindner.cish.interpreter.Interpreter
                                     </mainClass>
+                                    <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                                    <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
                                 </manifest>
                             </archive>
                             <descriptorRefs>
