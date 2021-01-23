@@ -17,11 +17,11 @@ public class CishUtils {
 	 * @param base cache base path
 	 * @param path relative path
 	 *
-	 * @throws MalformedURLException
-	 * @throws ClassNotFoundException
-	 * @throws NoSuchMethodException
-	 * @throws InvocationTargetException
-	 * @throws IllegalAccessException
+	 * @throws MalformedURLException exception
+	 * @throws ClassNotFoundException exception
+	 * @throws NoSuchMethodException exception
+	 * @throws InvocationTargetException exception
+	 * @throws IllegalAccessException exception
 	 */
 	public static void require(final String base, final String path) throws MalformedURLException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 		String str = path.replaceAll("/", ".");

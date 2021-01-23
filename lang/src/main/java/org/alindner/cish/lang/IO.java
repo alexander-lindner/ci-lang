@@ -297,12 +297,12 @@ public class IO {
 
 	/**
 	 * set the owner of a file
+	 * <p>
+	 * todo add recursive support for files
 	 *
 	 * @param user  user, can be null to ignore
 	 * @param group group, can be null to ignore
 	 * @param file  file
-	 *
-	 * @todo add recursive support for files
 	 */
 	public static void chown(final String user, final String group, final CiFile file) {
 		final UserPrincipalLookupService lookupService = FileSystems.getDefault().getUserPrincipalLookupService();
@@ -475,7 +475,7 @@ public class IO {
 	/**
 	 * convert a number, given as char, to it's unix octal permission representation.
 	 * <p>
-	 * this number can be shown by using `ls -l` and  stat -c '%a %n' *` or `ls -l | awk '{k=0;for(i=0;i<=8;i++)k+=((substr($1,i+2,1)~/[rwx]/) 2^(8-i));if(k)printf("%0o
+	 * this number can be shown by using `ls -l` and  stat -c '%a %n' *` or `ls -l | awk '{k=0;for(i=0;i&lt;=8;i++)k+=((substr($1,i+2,1)~/[rwx]/) 2^(8-i));if(k)printf("%0o
 	 * ",k);print}'`
 	 *
 	 * @param charAt number representation

@@ -9,8 +9,8 @@ import java.util.Set;
 
 /**
  * adds docker interaction
- *
- * @todo finish
+ * <p>
+ * todo finish
  */
 public class Docker {
 	static DockerClient docker = DockerClientBuilder.getInstance("unix:///var/run/docker.sock").build();

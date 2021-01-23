@@ -24,6 +24,11 @@ import java.util.stream.Stream;
  */
 @Log4j2
 public class Env {
+	/**
+	 * get a list of all env varianles
+	 *
+	 * @return list
+	 */
 	public static HashMap<String, String> list() {
 		return System.getenv()
 		             .entrySet()
@@ -64,6 +69,8 @@ public class Env {
 	 * get the value from an environment variable
 	 *
 	 * @param key env name
+	 *
+	 * @return value
 	 */
 	public static String get(final String key) {
 		return Env.list().get(key);
@@ -81,11 +88,14 @@ public class Env {
 	/**
 	 * Sets an environment variable FOR THE CURRENT RUN OF THE JVM Does not actually modify the system's environment variables, but rather only the copy of the variables that java
 	 * has taken, and hence should only be used for testing purposes!
+	 * <p>
+	 * todo check for {@link Field#isAccessible} deprecation
 	 *
 	 * @param value The value of the variable to set
+	 * @param key   The Name of the variable to set
+	 * @param <K>   Type of key
+	 * @param <V>   Type   of value
 	 *
-	 * @par.m key   The Name of the variable to set
-	 * @todo check for {@link Field#isAccessible} deprecation
 	 * @see <a href="https://stackoverflow.com/a/38073822">based on https://stackoverflow.com/a/38073822</a>
 	 */
 	public static <K, V> void setenv(final String key, final String value) {

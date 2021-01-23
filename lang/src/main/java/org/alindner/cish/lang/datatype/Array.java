@@ -9,10 +9,10 @@ import java.util.stream.Collectors;
 
 /**
  * An internal implementation of an array list
+ * <p>
+ * todo finish array
  *
- * @param <T>
- *
- * @todo finish array
+ * @param <T> Type
  */
 public class Array<T> extends ArrayList<T> implements Basic<T> {
 	/**
@@ -22,6 +22,13 @@ public class Array<T> extends ArrayList<T> implements Basic<T> {
 	private static final long                           serialVersionUID = 1034526056464101099L;
 
 	/**
+	 * Returns a {@code Collector} that accumulates the input elements into a new {@code List}. There are no guarantees on the type, mutability, serializability, or thread-safety
+	 * of the {@code List} returned; if more control over the returned {@code List} is required, use {@link Collectors#toCollection(Supplier)}.
+	 *
+	 * @param <T> the type of the input elements
+	 *
+	 * @return a {@code Collector} which collects all the input elements into a {@code List}, in encounter order
+	 *
 	 * @see Collectors#toList()
 	 */
 	public static <T> Collector<T, ?, Array<T>> toList() {

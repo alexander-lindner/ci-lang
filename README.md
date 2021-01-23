@@ -22,9 +22,7 @@ IO::copy(INTERPRETER,"docker/build")
 Docker::build("docker/build","alexanderlindner/cish:latest")
 ```
 
----
-> The whole repo is in an experimental state. Maybe it doesn't get finished at all.
----
+> ## :warning: The whole repo is in an experimental state. Maybe it doesn't get finished at all.
 
 ## Todos
 
@@ -46,18 +44,9 @@ Docker::build("docker/build","alexanderlindner/cish:latest")
 * curl & Json/XMl support
 * OS tools like hostname, ip addr, ...
 
-## Snippets
+## Contributing
 
-```bash
-echo '#!/usr/bin/java --source 12 -cp target/ci-interpreter-0.1-SNAPSHOT-jar-with-dependencies.jar' >$INTERPRETER
-INTERPRETER="target/cish"
-cat <<EOF >>INTERPRETER
-import java.io.*;
-public class Wrapper {
-  public static void main(final String... args) throws IOException {
-    new org.alindner.cish.interpreter.Interpreter(args);
-  }
-}
-EOF
-chmod +x INTERPRETER
-```
+For development simply use maven.
+The project is configured for Intellij.
+For testing use the following line:
+`sudo ln -s $(pwd)/target/cish /bin/cish`

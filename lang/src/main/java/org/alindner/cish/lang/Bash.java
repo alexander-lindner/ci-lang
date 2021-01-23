@@ -11,8 +11,8 @@ import java.util.stream.Collectors;
 
 /**
  * adds interaction between the cish script and a (ba)sh script
- *
- * @beta todo
+ * <p>
+ * beta todo
  */
 @Log4j2
 public class Bash {
