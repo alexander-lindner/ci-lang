@@ -7,9 +7,11 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="demoExtension" />
+        <module name="interpreter" />
+        <module name="extension" />
         <module name="lang" />
         <module name="compiler" />
-        <module name="interpreter" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>

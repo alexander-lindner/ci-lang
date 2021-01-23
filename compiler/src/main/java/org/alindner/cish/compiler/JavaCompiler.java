@@ -2,40 +2,61 @@ package org.alindner.cish.compiler;
 
 import lombok.extern.log4j.Log4j2;
 
-import javax.tools.DiagnosticCollector;
-import javax.tools.JavaFileObject;
-import javax.tools.StandardJavaFileManager;
-import javax.tools.ToolProvider;
+import javax.tools.*;
+import javax.tools.JavaCompiler.CompilationTask;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.util.*;
 
 @Log4j2
 public class JavaCompiler {
 	public static void compile(final File sourceFile) throws Exception {
-		final File classesDir;
-		final File sourceDir = classesDir = new File(sourceFile.getParent());
+		final File sourceDir = new File(sourceFile.getParent());
 
+		JavaCompiler.jarToDir(sourceDir);
 		JavaCompiler.copyLangClasses(sourceDir);
+
 
 		final javax.tools.JavaCompiler            compiler    = ToolProvider.getSystemJavaCompiler();
 		final DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
-		final StandardJavaFileManager             fileManager = compiler.getStandardFileManager(diagnostics, Locale.getDefault(), null);
+		final StandardJavaFileManager             fileManager = compiler.getStandardFileManager(diagnostics, Locale.getDefault(), Charset.defaultCharset());
 		final List<JavaFileObject>                javaObjects = JavaCompiler.scanRecursivelyForJavaObjects(sourceDir, fileManager);
+
+		fileManager.setLocation(
+				StandardLocation.CLASS_PATH,
+				Collections.singletonList(sourceDir)
+		);
 
 		if (javaObjects.size() == 0) {
 			throw new Exception(String.format("There are no source files to compile in %s", sourceDir.getAbsolutePath()));
 		}
-		final String[]         compileOptions     = new String[]{"-d", classesDir.getAbsolutePath()};
-		final Iterable<String> compilationOptions = Arrays.asList(compileOptions);
 
-		final javax.tools.JavaCompiler.CompilationTask compilerTask = compiler.getTask(null, fileManager, diagnostics, compilationOptions, null, javaObjects);
+		final CompilationTask compilerTask = compiler.getTask(
+				null,
+				fileManager,
+				diagnostics,
+				Arrays.asList("-d", sourceDir.getAbsolutePath()),
+				null,
+				javaObjects
+		);
 
 		if (!compilerTask.call()) {
 			diagnostics.getDiagnostics().forEach(diagnostic -> System.err.format("Error on line %d in %s", diagnostic.getLineNumber(), diagnostic));
 			throw new Exception("Could not compile project");
+		}
+	}
+
+	private static void jarToDir(final File sourceDir) {
+		for (final File file : Objects.requireNonNull(sourceDir.listFiles())) {
+			if (file.isFile()) {
+				if (file.getAbsolutePath().endsWith(".jar")) {
+					JavaCompiler.log.debug(String.format("Extracting %s files content to %s", file, sourceDir));
+					Utils.copyClassesFromJar(file.getAbsolutePath(), sourceDir);
+				}
+			}
 		}
 	}
 

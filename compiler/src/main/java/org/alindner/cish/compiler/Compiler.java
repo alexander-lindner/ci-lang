@@ -56,7 +56,7 @@ public class Compiler {
 	 *
 	 * @return class name
 	 */
-	private static List<String> fileToClass(final File file) {
+	static List<String> fileToClass(final File file) {
 		switch (FileUtils.getFileExtension(file)) {
 			case "java":
 				final List<String> list = new ArrayList<>();
@@ -130,7 +130,7 @@ public class Compiler {
 					.setPackageToHashName()
 					.loadScriptToMemory()
 					.compileCish()
-					.compileJava();
+					.compileJava(Collections.emptyList());
 		} catch (final IOException | ParseException e) {
 			Compiler.log.error(e); //todo
 		}
@@ -144,13 +144,16 @@ public class Compiler {
 	/**
 	 * the main method for compiling java code to byte code
 	 *
+	 * @param imports
+	 *
 	 * @return this
 	 *
 	 * @throws IOException
 	 */
-	public Compiler compileJava() throws IOException {
+	public Compiler compileJava(final List<Class<?>> imports) throws IOException {
 		this.putJavaContentToFile();
 		this.putBashContentToFile();
+		imports.forEach(aClass -> this.imports.add(aClass.getCanonicalName()));
 		this.prependsImports();
 
 		final ArrayList<File> iterateList = new ArrayList<>();
@@ -172,7 +175,7 @@ public class Compiler {
 					                try {
 						                JavaCompiler.compile(path);
 					                } catch (final Exception e) {
-						                Compiler.log.error(e);
+						                Compiler.log.error("Couldn't compile file " + path, e);
 					                }
 				                });
 			           } catch (final IOException e) {

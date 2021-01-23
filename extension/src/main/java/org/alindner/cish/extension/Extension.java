@@ -43,7 +43,7 @@ public interface Extension {
 
 		@Override
 		public String getVersion() {
-			return null;
+			return "0.0.1";
 		}
 
 		@Override
@@ -71,7 +71,7 @@ public interface Extension {
 		String groupId;
 		String artifactId;
 		String version;
-		String name;
+
 
 		@Override
 		public URL getUrl() {
@@ -101,7 +101,7 @@ public interface Extension {
 
 		@Override
 		public String getName() {
-			return this.name;
+			return String.format("%s.%s", this.groupId, this.artifactId);
 		}
 
 		@Override

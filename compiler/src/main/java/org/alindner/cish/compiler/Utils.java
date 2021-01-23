@@ -1,10 +1,13 @@
 package org.alindner.cish.compiler;
 
+import lombok.extern.log4j.Log4j2;
+
 import javax.xml.bind.DatatypeConverter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -12,7 +15,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+
+@Log4j2
 public class Utils {
 	public static String md5(final String str) {
 		MessageDigest md;
@@ -46,9 +54,30 @@ public class Utils {
 				}
 			}
 		} catch (final Exception e) {
-			System.out.println("Oops.. Encounter an issue while parsing jar" + e.toString()); //todo
+			Utils.log.error("Encounter an issue while parsing jar", e);
 		}
 		return list;
+	}
+
+	public static void copyClassesFromJar(final String crunchifyJarName, final File target) {
+		try (final ZipInputStream zipIn = new ZipInputStream(new FileInputStream(crunchifyJarName))) {
+			for (ZipEntry ze; (ze = zipIn.getNextEntry()) != null; ) {
+				final Path resolvedPath = target.toPath().resolve(ze.getName());
+				if (ze.isDirectory()) {
+					if (!resolvedPath.toFile().exists()) {
+						Files.createDirectories(resolvedPath);
+					}
+				} else {
+
+					if (!resolvedPath.toFile().exists()) {
+						Files.createDirectories(resolvedPath);
+					}
+					Files.copy(zipIn, resolvedPath, REPLACE_EXISTING);
+				}
+			}
+		} catch (final IOException e) {
+			Utils.log.error("Encounter an issue while parsing jar", e);
+		}
 	}
 
 	/**

@@ -35,6 +35,12 @@ import java.util.Map;
  */
 @Log4j2
 public class Interpreter {
+	final static    List<CiFile>        directories      = List.of(
+			new CiFile("~/.cish/extensions/"),
+			new CiFile("/var/lib/cish/extensions/"),
+			new CiFile("./.cish/extensions/")
+	);
+	final static    ExtensionManager    manager          = new ExtensionManager();
 	protected final List<String>        argsList         = new ArrayList<>();
 	protected final Map<String, String> parameters       = new HashMap<>();
 	protected final List<String>        simpleParameters = new ArrayList<>();
@@ -56,6 +62,11 @@ public class Interpreter {
 			case "debug":
 				Configurator.setRootLevel(Level.DEBUG);
 				this.verbose = true;
+				this.debug = false;
+				break;
+			case "verbose":
+				Configurator.setRootLevel(Level.DEBUG);
+				this.verbose = true;
 				this.debug = true;
 				break;
 			case "info":
@@ -70,7 +81,7 @@ public class Interpreter {
 				this.debug = false;
 				break;
 		}
-
+		Interpreter.loadExtensions();
 		this.loadFiles();
 	}
 
@@ -108,6 +119,16 @@ public class Interpreter {
 	}
 
 	/**
+	 * load all extensions
+	 */
+	private static void loadExtensions() {
+		Interpreter.directories.forEach(ciFile -> {
+			Interpreter.manager.readIn(ciFile);
+			Interpreter.manager.readDependenciesIn();
+		});
+	}
+
+	/**
 	 * loads, compiles and executes the given cish scrips
 	 *
 	 * @throws IOException    couldn't load files
@@ -115,12 +136,13 @@ public class Interpreter {
 	 */
 	private void loadFiles() throws IOException, ParseException {
 		for (final String fileName : this.args.<String>getList("file")) {
-			final File                f   = new File(fileName);
-			final Map<String, String> map = new Compiler(this.debug, f).loadScriptToMemory().compileCish().compileJava().getJavaContent();
+			final File f = new File(fileName);
+			Interpreter.manager.copyToTargetDir(new CiFile(Utils.getCompileDirOfShellScript(f)));
+			final Map<String, String> map = new Compiler(this.debug, f).loadScriptToMemory().compileCish().compileJava(Interpreter.manager.getImports()).getJavaContent();
 			try {
 				Interpreter.load(f);
 			} catch (final ClassNotFoundException | IllegalAccessException | MalformedURLException | NoSuchMethodException | InvocationTargetException | NoSuchAlgorithmException e) {
-				Interpreter.log.fatal(e);
+				Interpreter.log.fatal("Error during loading file " + f, e);
 			}
 		}
 	}
@@ -139,7 +161,7 @@ public class Interpreter {
 		                                             .version(this.getClass().getPackage().getImplementationVersion())
 		                                             .description("The shell for ci purpose.");
 		parser.addArgument("-l", "--log")
-		      .choices("info", "debug", "error")
+		      .choices("info", "debug", "error", "verbose")
 		      .setDefault("error")
 		      .help("Set the default log level of the script");
 		parser.addArgument("file")

@@ -235,13 +235,28 @@ public class IO {
 	 *
 	 * @return CiFile representation of the destination path
 	 */
-	public static CiFile copy(final String src, final CiFile dest) {
-		try {
-			return new CiFile(Files.copy(Paths.get(src), dest.toPath(), REPLACE_EXISTING).toFile());
-		} catch (final IOException e) {
-			Log.fatal(String.format("Couldn't copy the folder '%s' to '%s'", src, dest), e);
+	public static CiFile copy(final CiFile src, final CiFile dest) {
+		final Path destPath = dest.toPath();
+		final Path srcPath  = src.toPath();
+		if (dest.isDirectory()) {
+			IO.copyFolder(srcPath, Paths.get(destPath.toString(), srcPath.getFileName().toString()));
+			return dest.get(src.getName());
+		} else {
+			IO.copyFolder(srcPath, destPath);
+			return dest;
 		}
-		return null;
+	}
+
+	/**
+	 * copy a file to other direction
+	 *
+	 * @param src  source path
+	 * @param dest destination path
+	 *
+	 * @return CiFile representation of the destination path
+	 */
+	public static CiFile copy(final String src, final CiFile dest) {
+		return IO.copy(src, dest.toPath().toAbsolutePath().toString());
 	}
 
 	/**
@@ -253,17 +268,7 @@ public class IO {
 	 * @return CiFile representation of the destination path
 	 */
 	public static CiFile copy(final String src, final String dest) {
-		final Path dirOrFile = Paths.get(dest);
-		if (new CiFile(src).isDirectory()) {
-			if (dirOrFile.toFile().isDirectory()) {
-				IO.copyFolder(Paths.get(src), Paths.get(dirOrFile.toString(), Paths.get(src).getFileName().toString()));
-			} else {
-				IO.copyFolder(Paths.get(src), dirOrFile);
-			}
-		} else {
-			IO.copy(Paths.get(src), dirOrFile);
-		}
-		return new CiFile(Paths.get(dest).toFile());
+		return IO.copy(new CiFile(src), new CiFile(dest));
 	}
 
 	/**

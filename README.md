@@ -46,7 +46,8 @@ Docker::build("docker/build","alexanderlindner/cish:latest")
 
 ## Contributing
 
-For development simply use maven.
-The project is configured for Intellij.
-For testing use the following line:
+For development simply use maven. The project is configured for Intellij. For testing use the following line:
 `sudo ln -s $(pwd)/target/cish /bin/cish`
+
+
+
