@@ -28,6 +28,29 @@ Docker: https://hub.docker.com/r/alexanderlindner/cish
 
 ## Usage in your ci
 
+### Gitlab CI
+
+```yaml
+image: alexanderlindner/cish:latest
+
+demo-job-full:
+  script:
+    - chmod +x ./test.cish
+    - ./test.cish
+
+demo-job-lite:
+  image: alexanderlindner/cish:alpine
+  script:
+    - chmod +x ./test.cish
+    - ./test.cish
+
+demo-job-tiny:
+  image: alexanderlindner/cish:distroless
+  script:
+    - chmod +x ./test.cish
+    - ./test.cish
+```
+
 ### Manual
 
 Using jq:
@@ -44,28 +67,12 @@ curl -L $(curl -s https://api.github.com/repos/alexander-lindner/cish/releases/l
 chmod +x /bin/cish
 ```
 
-## Todos
-
-* improve Readmes
-* ~~IO lib~~
-* documentation
-* function support (which isn't easy)
-* ~~github ci support~~ move github ci files to own repo
-* FTP / SFTP / Webdav support
-* SSH Support
-* ~~ENV lib~~
-* git support
-* zip / tar / ... support
-* dpkg-build support
-* Regex/sed support
-* jar support
-* ~~parameter support~~
-* curl & Json/XMl support
-* OS tools like hostname, ip addr, ...
-
 ## Contributing
 
-For development simply use maven. The project is configured for Intellij. For testing use the following line:
+For development simply use maven. The project is configured for Intellij. For inline developing, run the `org.alindner.cish.interpreter.Interpreter` class with a cish file as
+parameter.
+
+For testing of the current version use the following line:
 `sudo ln -s $(pwd)/target/cish /bin/cish`
 
 
