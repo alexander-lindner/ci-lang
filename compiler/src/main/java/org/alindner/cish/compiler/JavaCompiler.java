@@ -10,6 +10,9 @@ import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.util.*;
+import java.util.stream.Stream;
+
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 @Log4j2
 public class JavaCompiler {
@@ -65,25 +68,42 @@ public class JavaCompiler {
 	}
 
 	private static void copyLangClasses(final File sourceDir, final String base) throws IOException, URISyntaxException {
-		final Path       compilerPath = Paths.get(JavaCompiler.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-		final FileSystem fileSystem   = FileSystems.newFileSystem(compilerPath, JavaCompiler.class.getClassLoader());
-
-		for (final Path rootDirectory : fileSystem.getRootDirectories()) {
-			final Iterator<Path> it = Files.walk(rootDirectory).filter(path -> path.toString().startsWith(String.format("/%s", base))).iterator();
-			while (it.hasNext()) {
-				final Path path = it.next();
-				if (!path.toString().endsWith(".class")) {
-					JavaCompiler.copyLangClasses(sourceDir, path.toString() + "/");
-				} else {
-					final String name   = new File(path.toString()).getName();
-					final File   target = new File(sourceDir, new File(path.toString()).getParent());
-					target.mkdirs();
-					Files.copy(
-							Files.newInputStream(path),
-							Paths.get(new File(target, name).getAbsolutePath()),
-							StandardCopyOption.REPLACE_EXISTING
-					);
+		final Path compilerPath = Paths.get(JavaCompiler.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+		try {
+			final FileSystem fileSystem = FileSystems.newFileSystem(compilerPath, JavaCompiler.class.getClassLoader());
+			for (final Path rootDirectory : fileSystem.getRootDirectories()) {
+				final Iterator<Path> it = Files.walk(rootDirectory).filter(path -> path.toString().startsWith(String.format("/%s", base))).iterator();
+				while (it.hasNext()) {
+					final Path path = it.next();
+					if (!path.toString().endsWith(".class")) {
+						JavaCompiler.copyLangClasses(sourceDir, path.toString() + "/");
+					} else {
+						final String name   = new File(path.toString()).getName();
+						final File   target = new File(sourceDir, new File(path.toString()).getParent());
+						target.mkdirs();
+						Files.copy(
+								Files.newInputStream(path),
+								Paths.get(new File(target, name).getAbsolutePath()),
+								REPLACE_EXISTING
+						);
+					}
 				}
+			}
+		} catch (final ProviderNotFoundException e) {
+			// Tested with Intellij. This may not work in Eclipse or other IDEs as we suppose the compiled source ist placed to /<projectname>/target/classes/.
+			// Also, if you have a parent dir with /compiler/ it won't work.
+			// However, this is just an in IDE support and doesn't need to be fail safe.
+			JavaCompiler.log.info("Couldn't detect a jar - we suppose this instance is run from within the IDE...", e);
+			final Path langPath = Path.of(compilerPath.toString().replaceAll("/compiler/", "/lang/"));
+			JavaCompiler.log.error(String.format("try to find lang file in %s", langPath));
+			try (final Stream<Path> stream = Files.walk(langPath)) {
+				stream.forEach(source -> {
+					try {
+						Files.copy(source, sourceDir.toPath().resolve(langPath.relativize(source)), REPLACE_EXISTING);
+					} catch (final Exception ex) {
+						JavaCompiler.log.error("An error append", ex);
+					}
+				});
 			}
 		}
 	}
