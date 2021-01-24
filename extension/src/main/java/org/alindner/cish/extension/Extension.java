@@ -19,7 +19,7 @@ public interface Extension {
 	Map<Extension, Type> getConflicts();
 
 
-	public enum Type {
+	enum Type {
 		EQUALS, LOWER, HIGHER
 	}
 
@@ -31,7 +31,6 @@ public interface Extension {
 	@Builder
 	@Data
 	class JarDependency implements Dependencies {
-
 		URL    url;
 		String version;
 		String name;
@@ -60,18 +59,15 @@ public interface Extension {
 		public Map<Extension, Type> getConflicts() {
 			return Collections.emptyMap();
 		}
-
 	}
 
 	@Builder
 	@Log4j2
 	@AllArgsConstructor
 	class MavenDependency implements Dependencies {
-
 		String groupId;
 		String artifactId;
 		String version;
-
 
 		@Override
 		public URL getUrl() {
@@ -161,7 +157,7 @@ public interface Extension {
 	@Builder
 	@Log4j2
 	@AllArgsConstructor
-	class LocalDependency implements Dependencies {
+	class LocalJarDependency implements Dependencies {
 		String version;
 		String name;
 

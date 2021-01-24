@@ -1,4 +1,4 @@
-# cish ![ci](https://github.com/alexander-lindner/ci-lang/workflows/ci/badge.svg) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+# cish ![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/alexander-lindner/cish/ci/master?style=for-the-badge) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=for-the-badge)](https://www.gnu.org/licenses/gpl-3.0) ![Docker Pulls](https://img.shields.io/docker/pulls/alexanderlindner/cish?style=for-the-badge)
 
 Cish aims to provide a simpler and more human readable shell scripting language than bash. It is build CI first which means that not all necessary features which a "normal" lang
 provide is build to cish.
@@ -22,25 +22,26 @@ IO::copy(INTERPRETER,"docker/build")
 Docker::build("docker/build","alexanderlindner/cish:latest")
 ```
 
+Docker: https://hub.docker.com/r/alexanderlindner/cish
+
 > ## :warning: The whole repo is in an experimental state. Maybe it doesn't get finished at all.
 
 ## Todos
 
 * improve Readmes
-* IO lib
+* ~~IO lib~~
 * documentation
-* more default libs
 * function support (which isn't easy)
-* github ci support
+* ~~github ci support~~ move github ci files to own repo
 * FTP / SFTP / Webdav support
 * SSH Support
-* ENV lib
+* ~~ENV lib~~
 * git support
 * zip / tar / ... support
 * dpkg-build support
 * Regex/sed support
 * jar support
-* parameter support
+* ~~parameter support~~
 * curl & Json/XMl support
 * OS tools like hostname, ip addr, ...
 
