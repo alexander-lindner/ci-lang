@@ -86,8 +86,6 @@ public class Utils {
 	 * @param file cish file
 	 *
 	 * @return cached dir
-	 *
-	 * @throws NoSuchAlgorithmException if something goes wrong with md5
 	 */
 	public static File getCompileDirOfShellScript(final File file) {
 		final File sourceFile = new File(Props.root, "p" + Utils.md5(file.getAbsoluteFile().getName()));
@@ -96,13 +94,12 @@ public class Utils {
 	}
 
 	/**
-	 * get the cached base dir of the cish file
+	 * get the cached base dir of the cish file if it is a sub dir
 	 *
-	 * @param file cish file
+	 * @param file   cish file
+	 * @param parent parent dir
 	 *
 	 * @return cached dir
-	 *
-	 * @throws NoSuchAlgorithmException if something goes wrong with md5
 	 */
 	public static File getCompileDirOfShellScript(final File parent, final File file) {
 		final File sourceFile = new File(parent, "p" + Utils.md5(file.getAbsoluteFile().getName()));

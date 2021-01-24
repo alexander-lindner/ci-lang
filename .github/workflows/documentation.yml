@@ -1,0 +1,66 @@
+name: documentation
+
+on:
+  push:
+    branches: master
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    if: (needs.main-cish.result == 'failure')
+    needs: main-cish
+    steps:
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Set up JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: 15
+      - name: Cache local Maven repository
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Build docs
+        run: ./mvnw clean package javadoc:javadoc
+
+      - name: Deploy doc "compiler"
+        uses: JamesIves/github-pages-deploy-action@3.7.1
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: gh-pages
+          FOLDER: ./compiler/target/site/apidocs/
+          TARGET_FOLDER: ./docs/compiler/
+          CLEAN: true
+
+      - name: Deploy doc "interpreter"
+        uses: JamesIves/github-pages-deploy-action@3.7.1
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: gh-pages
+          FOLDER: ./interpreter/target/site/apidocs/
+          TARGET_FOLDER: ./docs/interpreter/
+          CLEAN: true
+
+      - name: Deploy doc "lang"
+        uses: JamesIves/github-pages-deploy-action@3.7.1
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: gh-pages
+          FOLDER: ./lang/target/site/apidocs/
+          TARGET_FOLDER: ./docs/lang/
+          CLEAN: true
+
+      - name: Deploy doc "extension"
+        uses: JamesIves/github-pages-deploy-action@3.7.1
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: gh-pages
+          FOLDER: ./extension/target/site/apidocs/
+          TARGET_FOLDER: ./docs/extension/
+          CLEAN: true

@@ -8,8 +8,8 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="demoExtension" />
-        <module name="interpreter" />
         <module name="extension" />
+        <module name="interpreter" />
         <module name="lang" />
         <module name="compiler" />
       </profile>

@@ -145,11 +145,11 @@ public class Compiler {
 	/**
 	 * the main method for compiling java code to byte code
 	 *
-	 * @param imports
+	 * @param imports class which should be imported
 	 *
 	 * @return this
 	 *
-	 * @throws IOException
+	 * @throws IOException when compiling fails
 	 */
 	public Compiler compileJava(final List<Class<?>> imports) throws IOException {
 		this.putJavaContentToFile();
