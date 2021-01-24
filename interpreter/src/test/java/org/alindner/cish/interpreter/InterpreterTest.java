@@ -1,6 +1,6 @@
 package org.alindner.cish.interpreter;
 
-import org.alindner.cish.compiler.ParseException;
+import org.alindner.cish.compiler.jj.ParseException;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
