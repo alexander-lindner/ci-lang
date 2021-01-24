@@ -2,6 +2,7 @@ package org.alindner.cish.compiler;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
+import org.alindner.cish.compiler.jj.ParseException;
 import org.apache.logging.log4j.core.util.FileUtils;
 
 import java.io.File;

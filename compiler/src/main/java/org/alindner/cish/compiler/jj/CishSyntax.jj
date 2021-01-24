@@ -5,12 +5,14 @@ options
     LOOKAHEAD = 2048;
 }
 PARSER_BEGIN(Parser)
-package org.alindner.cish.compiler;
+package org.alindner.cish.compiler.jj;
 
 import java.nio.charset.Charset;
 import java.util.*;
 import java.io.*;
 import java.security.NoSuchAlgorithmException;
+import org.alindner.cish.compiler.*;
+
 @lombok.extern.log4j.Log4j2
 public class Parser {
 	private final List<String> variables = new ArrayList<>();

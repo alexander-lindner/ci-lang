@@ -1,6 +1,8 @@
 package org.alindner.cish.compiler;
 
 import lombok.Getter;
+import org.alindner.cish.compiler.jj.ParseException;
+import org.alindner.cish.compiler.jj.Parser;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -22,29 +24,29 @@ public class CishCompiler {
 		this.base = base;
 	}
 
-	public CishCompiler compile(final File file) throws org.alindner.cish.compiler.ParseException, FileNotFoundException {
+	public CishCompiler compile(final File file) throws ParseException, FileNotFoundException {
 		this.parser = new Parser(new FileInputStream(file), false, this.base);
 		this.doCompile();
 		return this;
 	}
 
-	public CishCompiler compile(final String content, final boolean renderClass) throws org.alindner.cish.compiler.ParseException {
+	public CishCompiler compile(final String content, final boolean renderClass) throws ParseException {
 		this.parser = new Parser(new StringReader(content), renderClass, this.base);
 		this.doCompile();
 		return this;
 	}
 
-	public CishCompiler compile(final String content) throws org.alindner.cish.compiler.ParseException {
+	public CishCompiler compile(final String content) throws ParseException {
 		return this.compile(content, true);
 	}
 
-	public CishCompiler compile() throws org.alindner.cish.compiler.ParseException {
+	public CishCompiler compile() throws ParseException {
 		this.parser = new Parser(System.in, false, this.base);
 		this.doCompile();
 		return this;
 	}
 
-	public void doCompile() throws org.alindner.cish.compiler.ParseException {
+	public void doCompile() throws ParseException {
 		if (!this.debug) {
 			this.parser.disable_tracing();
 		}

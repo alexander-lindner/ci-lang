@@ -48,8 +48,8 @@
                         <configuration>
                             <jdkVersion>1.8</jdkVersion>
                             <javadocFriendlyComments>true</javadocFriendlyComments>
-                            <packageName>org.alindner.cish.compiler</packageName>
-                            <sourceDirectory>src/main/java/org/alindner/cish/compiler/</sourceDirectory>
+                            <packageName>org.alindner.cish.compiler.jj</packageName>
+                            <sourceDirectory>src/main/java/org/alindner/cish/compiler/jj/</sourceDirectory>
                             <outputDirectory>${project.build.directory}/generated-sources/compiler</outputDirectory>
                         </configuration>
                     </execution>
