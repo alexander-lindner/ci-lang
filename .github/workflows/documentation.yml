@@ -7,8 +7,6 @@ on:
 jobs:
   main:
     runs-on: ubuntu-latest
-    if: (needs.main-cish.result == 'failure')
-    needs: main-cish
     steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
