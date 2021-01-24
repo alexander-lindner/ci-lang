@@ -10,7 +10,6 @@ package org.alindner.cish.compiler.jj;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.io.*;
-import java.security.NoSuchAlgorithmException;
 import org.alindner.cish.compiler.*;
 
 @lombok.extern.log4j.Log4j2
@@ -251,17 +250,17 @@ String heredoc():
     <HEREDOC_BASH>
     s=<END_HEREDOC_BASH>
     {
-        String str = s.toString();
-        if (str != null && str.length() > 0 && str.endsWith("```")) { //improve with javacc functionality
-            str = str.substring(0, str.length() - 3);
-        }
-
-        String fileName = Utils.md5(str);
-        bash.put(fileName,str);
-        return String.format("Bash.runScript(\"%s\",\"%s\");",base.getAbsolutePath(), fileName);
-
-        return "";
+    String str = s.toString();
+    if (str != null && str.length() > 0 && str.endsWith("```")) { //improve with javacc functionality
+        str = str.substring(0, str.length() - 3);
     }
+
+    String fileName = Utils.hash(str);
+    bash.put(fileName,str);
+    return String.format("Bash.runScript(\"%s\",\"%s\");",base.getAbsolutePath(), fileName);
+
+    return "";
+}
     |
     <HEREDOC_JAVA_INLINE>
     s=<END_HEREDOC_JAVA_INLINE>

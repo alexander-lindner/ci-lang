@@ -14,60 +14,107 @@ import java.util.stream.Stream;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
+/**
+ * compile a java file within the cish environment
+ *
+ * @author alindner
+ */
 @Log4j2
 public class JavaCompiler {
-	public static void compile(final File sourceFile) throws Exception {
-		final File sourceDir = new File(sourceFile.getParent());
+	/**
+	 * It compiles the given java file, which represents the java version of the origin cish file
+	 * <p>
+	 * It extracts all jar files ({@link JavaCompiler#jarToDir(File)}), copied the internal lang library to the dir ({@link JavaCompiler#copyLangClasses(File)} and finally compiles
+	 * the jar file
+	 *
+	 * @param sourceFile file representation of the java file
+	 *
+	 * @throws IOException          error when copying files.
+	 * @throws CishCompileException error when compiling the java file
+	 * @throws URISyntaxException   something strange happened when trying to access the executed file itself
+	 */
+	public static void compile(final File sourceFile) throws IOException, URISyntaxException, CishCompileException {
+		final File targetDir = new File(sourceFile.getParent());
 
-		JavaCompiler.jarToDir(sourceDir);
-		JavaCompiler.copyLangClasses(sourceDir);
+		JavaCompiler.jarToDir(targetDir);
+		JavaCompiler.copyLangClasses(targetDir);
 
 
 		final javax.tools.JavaCompiler            compiler    = ToolProvider.getSystemJavaCompiler();
 		final DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
 		final StandardJavaFileManager             fileManager = compiler.getStandardFileManager(diagnostics, Locale.getDefault(), Charset.defaultCharset());
-		final List<JavaFileObject>                javaObjects = JavaCompiler.scanRecursivelyForJavaObjects(sourceDir, fileManager);
+		final List<JavaFileObject>                javaObjects = JavaCompiler.scanRecursivelyForJavaObjects(targetDir, fileManager);
+		if (javaObjects.size() == 0) {
+			throw new CishCompileException(String.format("There are no source files to compile in %s", targetDir.getAbsolutePath()));
+		}
 
 		fileManager.setLocation(
 				StandardLocation.CLASS_PATH,
-				Collections.singletonList(sourceDir)
+				Collections.singletonList(targetDir)
 		);
 
-		if (javaObjects.size() == 0) {
-			throw new Exception(String.format("There are no source files to compile in %s", sourceDir.getAbsolutePath()));
-		}
 
 		final CompilationTask compilerTask = compiler.getTask(
 				null,
 				fileManager,
 				diagnostics,
-				Arrays.asList("-d", sourceDir.getAbsolutePath()),
+				Arrays.asList("-d", targetDir.getAbsolutePath()),
 				null,
 				javaObjects
 		);
 
 		if (!compilerTask.call()) {
 			diagnostics.getDiagnostics().forEach(diagnostic -> System.err.format("Error on line %d in %s", diagnostic.getLineNumber(), diagnostic));
-			throw new Exception("Could not compile project");
+			throw new CishCompileException("Could not compile file. Something during java compilation failed.");
 		}
 	}
 
-	private static void jarToDir(final File sourceDir) {
-		for (final File file : Objects.requireNonNull(sourceDir.listFiles())) {
+	/**
+	 * extracts the file content of all jars within the give dir, non-recursive
+	 * <p>
+	 * it is used to extract Extensions. It is required because the compiler ignores jar files which got add after jvm start.
+	 *
+	 * @param targetDir dir where the jar files are located
+	 */
+	private static void jarToDir(final File targetDir) {
+		for (final File file : Objects.requireNonNull(targetDir.listFiles())) {
 			if (file.isFile()) {
 				if (file.getAbsolutePath().endsWith(".jar")) {
-					JavaCompiler.log.debug(String.format("Extracting %s files content to %s", file, sourceDir));
-					Utils.copyClassesFromJar(file.getAbsolutePath(), sourceDir);
+					JavaCompiler.log.debug(String.format("Extracting %s files content to %s", file, targetDir));
+					Utils.copyClassesFromJar(file.getAbsolutePath(), targetDir);
 				}
 			}
 		}
 	}
 
-	private static void copyLangClasses(final File sourceDir) throws IOException, URISyntaxException {
-		JavaCompiler.copyLangClasses(sourceDir, JavaCompiler.class.getPackageName().replaceAll("\\.", "/").replace("/compiler", "/lang"));
+	/**
+	 * copies all classes from <code>org.alindner.cish.lang</code> to the given source dir.
+	 * <p>
+	 * if this method is called from within the jar file, it will use itself to find the lang package. If it is called from the IDE like Intellij, the files are copied from mavens
+	 * <code>target</code> directory
+	 *
+	 * @param targetDir target directory
+	 *
+	 * @throws IOException        error when copying files.
+	 * @throws URISyntaxException something strange happened when trying to access the executed file itself
+	 */
+	private static void copyLangClasses(final File targetDir) throws IOException, URISyntaxException {
+		JavaCompiler.copyLangClasses(targetDir, JavaCompiler.class.getPackageName().replaceAll("\\.", "/").replace("/compiler", "/lang"));
 	}
 
-	private static void copyLangClasses(final File sourceDir, final String base) throws IOException, URISyntaxException {
+	/**
+	 * copies all classes from <code>org.alindner.cish.lang</code> to the given source dir.
+	 * <p>
+	 * if this method is called from within the jar file, it will use itself to find the lang package. If it is called from the IDE like Intellij, the files are copied from mavens
+	 * <code>target</code> directory
+	 *
+	 * @param targetDir target directory
+	 * @param base      used within jar only. Detect the current path where it should copies files from
+	 *
+	 * @throws IOException        error when copying files.
+	 * @throws URISyntaxException something strange happened when trying to access the executed file itself
+	 */
+	private static void copyLangClasses(final File targetDir, final String base) throws IOException, URISyntaxException {
 		final Path compilerPath = Paths.get(JavaCompiler.class.getProtectionDomain().getCodeSource().getLocation().toURI());
 		try {
 			final FileSystem fileSystem = FileSystems.newFileSystem(compilerPath, JavaCompiler.class.getClassLoader());
@@ -76,10 +123,10 @@ public class JavaCompiler {
 				while (it.hasNext()) {
 					final Path path = it.next();
 					if (!path.toString().endsWith(".class")) {
-						JavaCompiler.copyLangClasses(sourceDir, path.toString() + "/");
+						JavaCompiler.copyLangClasses(targetDir, path.toString() + "/");
 					} else {
 						final String name   = new File(path.toString()).getName();
-						final File   target = new File(sourceDir, new File(path.toString()).getParent());
+						final File   target = new File(targetDir, new File(path.toString()).getParent());
 						target.mkdirs();
 						Files.copy(
 								Files.newInputStream(path),
@@ -93,13 +140,13 @@ public class JavaCompiler {
 			// Tested with Intellij. This may not work in Eclipse or other IDEs as we suppose the compiled source ist placed to /<projectname>/target/classes/.
 			// Also, if you have a parent dir with /compiler/ it won't work.
 			// However, this is just an in IDE support and doesn't need to be fail safe.
-			JavaCompiler.log.info("Couldn't detect a jar - we suppose this instance is run from within the IDE...", e);
+			JavaCompiler.log.info("Couldn't detect a jar - we suppose this instance is run from within the IDE...");
 			final Path langPath = Path.of(compilerPath.toString().replaceAll("/compiler/", "/lang/"));
 			JavaCompiler.log.error(String.format("try to find lang file in %s", langPath));
 			try (final Stream<Path> stream = Files.walk(langPath)) {
 				stream.forEach(source -> {
 					try {
-						Files.copy(source, sourceDir.toPath().resolve(langPath.relativize(source)), REPLACE_EXISTING);
+						Files.copy(source, targetDir.toPath().resolve(langPath.relativize(source)), REPLACE_EXISTING);
 					} catch (final Exception ex) {
 						JavaCompiler.log.error("An error append", ex);
 					}
@@ -108,6 +155,16 @@ public class JavaCompiler {
 		}
 	}
 
+	/**
+	 * returns a list of .java files which gets compiled.
+	 * <p>
+	 * To do so, the given dir is used to traverse recursive through the directory structure.
+	 *
+	 * @param dir         root dir, normally the scripts cache dir
+	 * @param fileManager used fileManager
+	 *
+	 * @return list of all .java files
+	 */
 	private static List<JavaFileObject> scanRecursivelyForJavaObjects(final File dir, final StandardJavaFileManager fileManager) {
 		final List<JavaFileObject> javaObjects = new LinkedList<>();
 		final File[]               files       = dir.listFiles();
@@ -122,7 +179,14 @@ public class JavaCompiler {
 		return javaObjects;
 	}
 
-
+	/**
+	 * return a java file from the given fileManager
+	 *
+	 * @param file        file which should be extracted
+	 * @param fileManager fileManager
+	 *
+	 * @return given file from fileManager
+	 */
 	private static JavaFileObject readJavaObject(final File file, final StandardJavaFileManager fileManager) {
 		final Iterator<? extends JavaFileObject> it = fileManager.getJavaFileObjects(file).iterator();
 		if (it.hasNext()) {
@@ -130,5 +194,4 @@ public class JavaCompiler {
 		}
 		throw new RuntimeException(String.format("Could not load %s java file object", file.getAbsolutePath()));
 	}
-
 }

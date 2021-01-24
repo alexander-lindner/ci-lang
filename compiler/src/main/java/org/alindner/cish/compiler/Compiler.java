@@ -105,6 +105,15 @@ public class Compiler {
 		return this.compileCish(this.content);
 	}
 
+	/**
+	 * compile the given file to java using our javacc parser
+	 *
+	 * @param s content
+	 *
+	 * @return this
+	 *
+	 * @throws ParseException a syntax error happened
+	 */
 	public Compiler compileCish(final String s) throws ParseException {
 		final CishCompiler c = new CishCompiler(this.debug, this.base).compile(s);
 		this.javaContent.put("Main", (this.pkg != null) ? "package p" + this.pkg + ";\n" + c.getContent() : c.getContent());
@@ -138,7 +147,7 @@ public class Compiler {
 	}
 
 	private Compiler setPackageToHashName() {
-		this.pkg = Utils.md5(this.file.getAbsoluteFile().getName());
+		this.pkg = Utils.hash(this.file.getAbsoluteFile().getName());
 		return this;
 	}
 
