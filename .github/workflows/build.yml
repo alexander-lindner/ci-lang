@@ -39,7 +39,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: build
-      - run: |
+        run: |
           if [[ "$GITHUB_REF" = refs/heads/* ]]; then
           export VERSIONING_GIT_BRANCH=${GITHUB_REF#refs/heads/};
           elif [[ "$GITHUB_REF" = refs/tags/* ]]; then
@@ -48,7 +48,7 @@ jobs:
           export VERSIONING_GIT_BRANCH=${GITHUB_REF#refs/};
           VERSIONING_GIT_BRANCH=${VERSIONING_GIT_BRANCH%/merge};
           fi
-      - run: ./build.sh
+          ./build.sh
 
       - name: docker
         id: docker_build
@@ -104,7 +104,7 @@ jobs:
             ${{ runner.os }}-cish-
 
       - name: build
-      - run: |
+        run: |
           if [[ "$GITHUB_REF" = refs/heads/* ]]; then
           export VERSIONING_GIT_BRANCH=${GITHUB_REF#refs/heads/};
           elif [[ "$GITHUB_REF" = refs/tags/* ]]; then
@@ -113,7 +113,7 @@ jobs:
           export VERSIONING_GIT_BRANCH=${GITHUB_REF#refs/};
           VERSIONING_GIT_BRANCH=${VERSIONING_GIT_BRANCH%/merge};
           fi
-      - run: ./build.sh
+          ./build.sh
 
       - name: docker
         id: docker_build
