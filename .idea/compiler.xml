@@ -8,7 +8,6 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="demoExtension" />
-        <module name="compiler" />
       </profile>
       <profile name="Annotation profile for cish" enabled="true">
         <sourceOutputDir name="../target/generated-sources/annotations" />
@@ -17,6 +16,7 @@
         <module name="extension" />
         <module name="interpreter" />
         <module name="lang" />
+        <module name="compiler" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
