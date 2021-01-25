@@ -1,0 +1,17 @@
+<gitVersioning>
+    <branch>
+        <pattern>master</pattern>
+        <versionFormat>${version.release}-STABLE-${commit}</versionFormat>
+    </branch>
+    <branch>
+        <pattern><![CDATA[feature/(?<feature>.+)]]></pattern>
+        <versionFormat>${version.release}-SNAPSHOT-${feature}-${commit}</versionFormat>
+    </branch>
+    <tag>
+        <pattern><![CDATA[version/(?<tagVersion>[0-9].*)]]></pattern>
+        <versionFormat>${tagVersion}</versionFormat>
+    </tag>
+    <commit>
+        <versionFormat>${commit.short}</versionFormat>
+    </commit>
+</gitVersioning>

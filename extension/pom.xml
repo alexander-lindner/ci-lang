@@ -7,9 +7,9 @@
     <parent>
         <groupId>org.alindner.cish</groupId>
         <artifactId>cish</artifactId>
-        <version>0.1-SNAPSHOT</version>
+        <version>0.3.4</version>
     </parent>
 
     <artifactId>extension</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>0.3.4</version>
 </project>

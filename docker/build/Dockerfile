@@ -4,10 +4,9 @@ ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update -q && apt-get install -qy git wget openjdk-15-jdk-headless maven && rm -rf /var/lib/apt/lists/*
 
+ENV HOME /app
+ENV M2_HOME /usr/share/maven
+WORKDIR /app
+
 ADD cish /bin/cish
 RUN chmod +x /bin/cish
-
-ENV HOME /data
-ENV M2_HOME /usr/share/maven
-
-WORKDIR /data
