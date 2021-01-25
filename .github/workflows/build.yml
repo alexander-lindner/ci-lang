@@ -38,16 +38,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      -name: version setup
+      - name: version setup
         run: >
-          if [[ "$GITHUB_REF" = refs/heads/* ]]; then
-            export VERSIONING_GIT_BRANCH=${GITHUB_REF#refs/heads/};
-          elif [[ "$GITHUB_REF" = refs/tags/* ]]; then
-            export VERSIONING_GIT_TAG=${GITHUB_REF#refs/tags/};
-          elif [[ "$GITHUB_REF" = refs/pull/*/merge ]]; then
-            export VERSIONING_GIT_BRANCH=${GITHUB_REF#refs/};
-            VERSIONING_GIT_BRANCH=${VERSIONING_GIT_BRANCH%/merge};
-          fi
+        if [[ "$GITHUB_REF" = refs/heads/* ]]; then
+        export VERSIONING_GIT_BRANCH=${GITHUB_REF#refs/heads/};
+        elif [[ "$GITHUB_REF" = refs/tags/* ]]; then
+        export VERSIONING_GIT_TAG=${GITHUB_REF#refs/tags/};
+        elif [[ "$GITHUB_REF" = refs/pull/*/merge ]]; then
+        export VERSIONING_GIT_BRANCH=${GITHUB_REF#refs/};
+        VERSIONING_GIT_BRANCH=${VERSIONING_GIT_BRANCH%/merge};
+        fi
 
         - name: build
           run: ./build.sh
@@ -105,16 +105,16 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cish-
 
-      -name: version setup
+      - name: version setup
         run: >
-          if [[ "$GITHUB_REF" = refs/heads/* ]]; then
-            export VERSIONING_GIT_BRANCH=${GITHUB_REF#refs/heads/};
-          elif [[ "$GITHUB_REF" = refs/tags/* ]]; then
-            export VERSIONING_GIT_TAG=${GITHUB_REF#refs/tags/};
-          elif [[ "$GITHUB_REF" = refs/pull/*/merge ]]; then
-            export VERSIONING_GIT_BRANCH=${GITHUB_REF#refs/};
-            VERSIONING_GIT_BRANCH=${VERSIONING_GIT_BRANCH%/merge};
-          fi
+        if [[ "$GITHUB_REF" = refs/heads/* ]]; then
+        export VERSIONING_GIT_BRANCH=${GITHUB_REF#refs/heads/};
+        elif [[ "$GITHUB_REF" = refs/tags/* ]]; then
+        export VERSIONING_GIT_TAG=${GITHUB_REF#refs/tags/};
+        elif [[ "$GITHUB_REF" = refs/pull/*/merge ]]; then
+        export VERSIONING_GIT_BRANCH=${GITHUB_REF#refs/};
+        VERSIONING_GIT_BRANCH=${VERSIONING_GIT_BRANCH%/merge};
+        fi
 
         - name: build
           run: ./build.cish
