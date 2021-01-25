@@ -16,6 +16,7 @@
     <description>A simple ci shell</description>
     <url>https://cish.alindner.org</url>
     <packaging>pom</packaging>
+    <name>cish</name>
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
