@@ -8,10 +8,10 @@
     <artifactId>cish</artifactId>
     <version>0.3.4</version>
     <modules>
-        <module>lang</module>
         <module>compiler</module>
-        <module>interpreter</module>
+        <module>lang</module>
         <module>extension</module>
+        <module>interpreter</module>
     </modules>
     <packaging>pom</packaging>
     <properties>
@@ -20,6 +20,7 @@
         <lombok.version>1.18.12</lombok.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <project.build.outputTimestamp>${git.commit.timestamp.datetime}</project.build.outputTimestamp>
     </properties>
     <dependencies>
         <dependency>
