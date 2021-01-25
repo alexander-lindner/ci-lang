@@ -25,7 +25,16 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Build docs
-        run: ./mvnw clean package javadoc:javadoc
+        run: |
+          if [[ "$GITHUB_REF" = refs/heads/* ]]; then
+          export VERSIONING_GIT_BRANCH=${GITHUB_REF#refs/heads/};
+          elif [[ "$GITHUB_REF" = refs/tags/* ]]; then
+          export VERSIONING_GIT_TAG=${GITHUB_REF#refs/tags/};
+          elif [[ "$GITHUB_REF" = refs/pull/*/merge ]]; then
+          export VERSIONING_GIT_BRANCH=${GITHUB_REF#refs/};
+          VERSIONING_GIT_BRANCH=${VERSIONING_GIT_BRANCH%/merge};
+          fi
+          ./mvnw clean package javadoc:javadoc
 
       - name: Deploy doc "compiler"
         uses: JamesIves/github-pages-deploy-action@3.7.1
