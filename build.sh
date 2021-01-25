@@ -10,3 +10,9 @@ echo '#!/usr/bin/java -jar ' >$INTERPRETER
 cat interpreter/target/interpreter-0.1-SNAPSHOT-jar-with-dependencies.jar >>$INTERPRETER
 chmod +x $INTERPRETER
 cp $INTERPRETER docker/build
+
+INTERPRETER="target/cish-alpine"
+echo '#!/opt/openjdk-15/bin/java -jar ' >$INTERPRETER
+cat interpreter/target/interpreter-0.1-SNAPSHOT-jar-with-dependencies.jar >>$INTERPRETER
+chmod +x $INTERPRETER
+cp $INTERPRETER docker/build

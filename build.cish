@@ -5,13 +5,17 @@ INTERPRETER="target/cish"
 Maven::clean()
 Maven::pkg()
 
-IO::removeIfExists(INTERPRETER)
-
 IO::setContent(INTERPRETER, "#!/usr/bin/java -jar \\n")
 IO::addContent(INTERPRETER, IO::getContent("interpreter/target/interpreter-0.1-SNAPSHOT-jar-with-dependencies.jar"))
 IO::executable(INTERPRETER,true)
-
 IO::copy(INTERPRETER,"docker/build/cish")
+
+INTERPRETER="target/cish-alpine"
+IO::setContent(INTERPRETER, "#!/opt/openjdk-15/bin/java -jar \\n")
+IO::addContent(INTERPRETER, IO::getContent("interpreter/target/interpreter-0.1-SNAPSHOT-jar-with-dependencies.jar"))
+IO::executable(INTERPRETER,true)
+IO::copy(INTERPRETER,"docker/build/cish-alpine")
+
 #Docker::build("docker/build","alexanderlindner/cish:latest")
 
 #file = new CiFile(INTERPRETER+2)

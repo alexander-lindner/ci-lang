@@ -4,7 +4,7 @@ MAINTAINER Alexander Lindner <25225552+alexander-lindner@users.noreply.github.co
 
 WORKDIR /app
 ENV HOME /app
-ADD cish /bin/cish
+ADD cish-alpine /bin/cish
 
 CMD ["/bin/cish"]
 ENTRYPOINT ["/bin/cish"]
