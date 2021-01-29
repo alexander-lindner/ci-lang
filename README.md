@@ -1,4 +1,4 @@
-# cish ![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/alexander-lindner/cish/ci/master?style=for-the-badge) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=for-the-badge)](https://www.gnu.org/licenses/gpl-3.0) ![Docker Pulls](https://img.shields.io/docker/pulls/alexanderlindner/cish?style=for-the-badge)
+# cish ![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/alexander-lindner/cish/ci/master?style=for-the-badge) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=for-the-badge)](https://www.gnu.org/licenses/gpl-3.0) ![Docker Pulls](https://img.shields.io/docker/pulls/alexanderlindner/cish?style=for-the-badge) [![Maven Central](https://img.shields.io/maven-central/v/org.alindner.cish/compiler.svg?label=Maven%20Central&style=for-the-badge)](https://search.maven.org/search?q=g:%22org.alindner.cish%22%20AND%20a:%22compiler%22)
 
 Cish aims to provide a simpler and more human-readable shell scripting language than bash. It is build CI first which means that not all necessary features which a "normal" shell
 provide is build to cish.
