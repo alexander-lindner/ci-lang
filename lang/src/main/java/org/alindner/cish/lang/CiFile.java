@@ -149,6 +149,25 @@ public class CiFile extends File {
 	}
 
 	/**
+	 * append text to the file
+	 *
+	 * @param content text content
+	 */
+	public void append(final String content) {
+		final List<String> lines = Arrays.asList(content.split("\n"));
+		final Path         file  = Paths.get(this.getAbsolutePath());
+		try {
+			Files.write(file, lines, UTF_8, APPEND, CREATE);
+		} catch (final IOException e) {
+			Log.internal("Couldn't create file", e);
+		}
+	}
+
+	public byte[] getContent() {
+		return IO.getContent(this.getAbsolutePath());
+	}
+
+	/**
 	 * set the text content of a file
 	 *
 	 * @param content content
@@ -168,21 +187,6 @@ public class CiFile extends File {
 		final Path         file  = Paths.get(this.getAbsolutePath());
 		try {
 			Files.write(file, lines, StandardCharsets.UTF_8);
-		} catch (final IOException e) {
-			Log.internal("Couldn't create file", e);
-		}
-	}
-
-	/**
-	 * append text to the file
-	 *
-	 * @param content text content
-	 */
-	public void append(final String content) {
-		final List<String> lines = Arrays.asList(content.split("\n"));
-		final Path         file  = Paths.get(this.getAbsolutePath());
-		try {
-			Files.write(file, lines, UTF_8, APPEND, CREATE);
 		} catch (final IOException e) {
 			Log.internal("Couldn't create file", e);
 		}

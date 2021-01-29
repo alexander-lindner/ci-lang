@@ -146,7 +146,10 @@ public class JavaCompiler {
 			try (final Stream<Path> stream = Files.walk(langPath)) {
 				stream.forEach(source -> {
 					try {
-						Files.copy(source, targetDir.toPath().resolve(langPath.relativize(source)), REPLACE_EXISTING);
+						final Path t = targetDir.toPath().resolve(langPath.relativize(source));
+						if (!t.toFile().exists()) {
+							Files.copy(source, t, REPLACE_EXISTING);
+						}
 					} catch (final Exception ex) {
 						JavaCompiler.log.error("An error append", ex);
 					}

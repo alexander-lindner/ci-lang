@@ -65,7 +65,7 @@ public class Interpreter {
 				this.debug = false;
 				break;
 			case "verbose":
-				Configurator.setRootLevel(Level.DEBUG);
+				Configurator.setRootLevel(Level.ALL);
 				this.verbose = true;
 				this.debug = true;
 				break;

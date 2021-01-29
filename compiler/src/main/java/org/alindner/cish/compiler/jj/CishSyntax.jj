@@ -80,7 +80,7 @@ TOKEN:
 | < REQUIRE : "require" >
 | < QUOTE:"\"" > : STRING_STATE
 | < IF: "if" >
-| < IS: "is" (<ID>)+ >
+| < IS: "~" (<ID>)+ >
 | < HEREDOC_JAVA: "```java" > : HEREDOC_JAVA_STATE
 | < HEREDOC_JAVA_INLINE: "`" > : HEREDOC_JAVA_INLINE_STATE
 | < HEREDOC_BASH: "```bash" > : HEREDOC_BASH_STATE
@@ -277,30 +277,33 @@ String lambda():
     StringBuilder n = new StringBuilder();
     String s;
     Token t;
-    List<String> tmpVariables = new ArrayList<>();
+    List<String> tmpVariables = new ArrayList<>(variables);
 }
 {
     (
-    {tmpVariables.addAll(variables);}
-    <LEFT_PAREN> {n.append("(");}
-    [t=<ID> {n.append(t.toString());}]
-    (<COMMA> t=<ID> {n.append(t.toString());})*
-    <RIGHT_PAREN>
-    ( <DOUBLE_ARROW> | <ARROW> )
-    <LEFT_BRACE> {n.append(") -> {");}
-    |
-    <LEFT_BRACE> {n.append("(it) -> {");}
+        <LEFT_PAREN> {n.append("(");}
+        [t=<ID> {n.append(t.toString());}]
+        (<COMMA> t=<ID> {n.append(t.toString());})*
+        <RIGHT_PAREN>
+        ( <DOUBLE_ARROW> | <ARROW> )
+        <LEFT_BRACE> {n.append(") -> {");}
+        |
+        <LEFT_BRACE> {n.append("(it) -> {");}
     )
-
-    [<EOL>]
     (
+        [<EOL>]
         s=line() {n.append(s).append(";");}
-        (<EOL> | <SEMICOLON> )*
+        [<SEMICOLON>]
+        [<EOL>]
     )*
     [<EOL>]
-    <RIGHT_BRACE>   {n.append("}");}
-    {variables.clear(); variables.addAll(tmpVariables);}
-    {return n.toString();}
+    <RIGHT_BRACE>
+    {
+        n.append("}");
+        variables.clear();
+        variables.addAll(tmpVariables);
+        return n.toString();
+    }
 }
 String objectCall():
 {
@@ -314,7 +317,7 @@ String objectCall():
         (
             s=namespace()
             <DOT>
-            t=<IS> {n.append("Is.is("+s+", Predicates."+t.toString()+"())");}
+            t=<IS> {n.append(String.format("Is.is(%s, Predicates.%s())", s, t.toString().replace("~","is")));}
             <LEFT_PAREN>
             <RIGHT_PAREN>
         )

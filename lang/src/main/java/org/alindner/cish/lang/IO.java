@@ -15,6 +15,7 @@ import java.nio.file.attribute.UserPrincipalLookupService;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -299,7 +300,6 @@ public class IO {
 		}
 	}
 
-
 	/**
 	 * set the owner of a file
 	 * <p>
@@ -448,6 +448,18 @@ public class IO {
 	}
 
 	/**
+	 * find files recursive in a given path
+	 *
+	 * @param path    base path
+	 * @param pattern regex patern
+	 *
+	 * @return Executor
+	 */
+	public static FileExecutor findFiles(final String path, final String pattern) {
+		return IO.findFiles(new CiFile(path), pattern);
+	}
+
+	/**
 	 * set unix file permission of a file using dezimal values like 755
 	 *
 	 * @param i    permission in dezimal representation
@@ -534,7 +546,6 @@ public class IO {
 		return isExecutable ? file.setExecutable(true) : file.setExecutable(false);
 	}
 
-
 	/**
 	 * touch a file
 	 *
@@ -574,4 +585,15 @@ public class IO {
 		IO.touch(new CiFile(file), timestamp);
 	}
 
+	private static FileExecutor findFiles(final String path, final Predicate<? super CiFile> predicate) {
+		return new FileExecutor(
+				IO.listFiles(path)
+				  .asList()
+				  .stream()
+				  .map(thePath -> new CiFile(thePath.toFile()))
+				  .filter(predicate)
+				  .map(File::toPath)
+				  .collect(Collectors.toList())
+		);
+	}
 }

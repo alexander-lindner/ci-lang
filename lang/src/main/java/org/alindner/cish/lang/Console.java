@@ -1,6 +1,7 @@
 package org.alindner.cish.lang;
 
 
+import org.alindner.cish.lang.file.FileExecutor;
 import org.apache.commons.io.FileUtils;
 
 import java.io.IOException;
@@ -104,6 +105,10 @@ public class Console {
 	 */
 	private static void print(final Console.Type type, final String msg) {
 		Log.println(String.format("[%s] %s", type, msg));
+	}
+
+	public static void print(final FileExecutor jarFile) {
+		Console.print(jarFile.asList());
 	}
 
 	/**

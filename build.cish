@@ -1,24 +1,23 @@
 #!/bin/cish
-#-ldebug
 
-INTERPRETER="target/cish"
 Maven::clean()
 Maven::pkg()
 
-IO::setContent(INTERPRETER, "#!/usr/bin/java -jar \\n")
-IO::addContent(INTERPRETER, IO::getContent("interpreter/target/interpreter-0.1-SNAPSHOT-jar-with-dependencies.jar"))
-IO::executable(INTERPRETER,true)
-IO::copy(INTERPRETER,"docker/build/cish")
 
-INTERPRETER="target/cish-alpine"
-IO::setContent(INTERPRETER, "#!/opt/openjdk-15/bin/java -jar \\n")
-IO::addContent(INTERPRETER, IO::getContent("interpreter/target/interpreter-0.1-SNAPSHOT-jar-with-dependencies.jar"))
-IO::executable(INTERPRETER,true)
-IO::copy(INTERPRETER,"docker/build/cish-alpine")
-
-#Docker::build("docker/build","alexanderlindner/cish:latest")
-
-#file = new CiFile(INTERPRETER+2)
-#file.setContent("#!/usr/bin/java -jar \\n");
-#file.addContent(IO::getContent("interpreter/target/interpreter-0.1-SNAPSHOT-jar-with-dependencies.jar"))
-#file.setExecutable(true)
+IO::listFiles("interpreter/target/").exec((file) -> {
+  if(file.~Jar()) {
+        if (file.getName().contains("-jar-with-dependencies")) {
+            INTERPRETER="target/cish"
+            IO::setContent(INTERPRETER, "#!/usr/bin/java -jar \\n")
+            IO::addContent(INTERPRETER, file.getContent())
+            IO::executable(INTERPRETER,true)
+            IO::copy(INTERPRETER,"docker/build/cish")
+#BUG: a char on this line is needed
+            INTERPRETER="target/cish-alpine"
+            IO::setContent(INTERPRETER, "#!/opt/openjdk-15/bin/java -jar \\n")
+            IO::addContent(INTERPRETER, file.getContent())
+            IO::executable(INTERPRETER,true)
+            IO::copy(INTERPRETER,"docker/build/cish-alpine")
+        }
+    }
+});

@@ -84,7 +84,10 @@ public class CishCompiler {
 	public void doCompile() throws ParseException {
 		if (!this.debug) {
 			this.parser.disable_tracing();
+		} else {
+			this.parser.enable_tracing();
 		}
+
 		this.content = this.parser.Root();
 	}
 
