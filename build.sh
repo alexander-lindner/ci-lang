@@ -4,18 +4,18 @@ if [[ "$GITHUB_REF" == refs/heads/* ]]; then
   export VERSIONING_GIT_BRANCH=${GITHUB_REF#refs/heads/}
 elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
   export VERSIONING_GIT_TAG=${GITHUB_REF#refs/tags/}
-
+  echo "======================== setting version ========================"
   ./mvnw -B versions:update-child-modules
   ./mvnw -B versions:set -DnewVersion="$VERSIONING_GIT_TAG" -DprocessAllModules
   ./mvnw -B versions:commit -DprocessAllModules
-
+  echo "======================== setting version END ========================"
 elif [[ "$GITHUB_REF" == refs/pull/*/merge ]]; then
   export VERSIONING_GIT_BRANCH=${GITHUB_REF#refs/}
   VERSIONING_GIT_BRANCH=${VERSIONING_GIT_BRANCH%/merge}
 fi
 
 VERSION=$(./mvnw --non-recursive exec:exec -Dexec.executable='echo' -Dexec.args='${project.version}' -q)
-echo "VERSION: $VERSION"
+echo "VERSION: $VERSION\n"
 
 INTERPRETER="target/cish"
 ./mvnw -B clean process-resources package
