@@ -9,6 +9,10 @@ elif [[ "$GITHUB_REF" == refs/pull/*/merge ]]; then
   VERSIONING_GIT_BRANCH=${VERSIONING_GIT_BRANCH%/merge}
 fi
 
+echo $VERSIONING_GIT_TAG
+echo ${GITHUB_REF##*/}
+echo $GITHUB_REF
+
 VERSION=$(./mvnw --non-recursive exec:exec -Dexec.executable='echo' -Dexec.args='${project.version}' -q)
 echo "VERSION: $VERSION"
 ./mvnw versions:update-child-modules
