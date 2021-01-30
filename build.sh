@@ -6,9 +6,9 @@ elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
   export VERSIONING_GIT_TAG=${GITHUB_REF#refs/tags/}
   echo "======================== setting version ========================"
   echo "======================== $VERSIONING_GIT_TAG ========================"
-  ./mvnw -B versions:update-child-modules
-  ./mvnw -B versions:set -DnewVersion="$VERSIONING_GIT_TAG" -DprocessAllModules
-  ./mvnw -B versions:commit -DprocessAllModules
+  ./mvnw -B -Dversioning.disable=true versions:update-child-modules
+  ./mvnw -B -Dversioning.disable=true versions:set -DnewVersion="$VERSIONING_GIT_TAG" -DprocessAllModules
+  ./mvnw -B -Dversioning.disable=true versions:commit -DprocessAllModules
   ./mvnw -B -Dversioning.disable=true clean process-resources package
   echo "======================== setting version END ========================"
 elif [[ "$GITHUB_REF" == refs/pull/*/merge ]]; then
