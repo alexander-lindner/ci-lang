@@ -9,8 +9,14 @@ elif [[ "$GITHUB_REF" == refs/pull/*/merge ]]; then
   VERSIONING_GIT_BRANCH=${VERSIONING_GIT_BRANCH%/merge}
 fi
 
+VERSION=$(./mvnw --non-recursive exec:exec -Dexec.executable='echo' -Dexec.args='${project.version}' -q)
+echo "VERSION: $VERSION"
+./mvnw versions:update-child-modules
+./mvnw versions:set -DnewVersion="$VERSION" -DprocessAllModules
+./mvnw versions:commit -DprocessAllModules
+
 INTERPRETER="target/cish"
-mvn clean process-resources package
+./mvnw -B clean process-resources package
 
 if [ -f $INTERPRETER ]; then
   rm $INTERPRETER
