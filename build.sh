@@ -5,9 +5,9 @@ if [[ "$GITHUB_REF" == refs/heads/* ]]; then
 elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
   export VERSIONING_GIT_TAG=${GITHUB_REF#refs/tags/}
 
-  ./mvnw versions:update-child-modules
-  ./mvnw versions:set -DnewVersion="$VERSIONING_GIT_TAG" -DprocessAllModules
-  ./mvnw versions:commit -DprocessAllModules
+  ./mvnw -B versions:update-child-modules
+  ./mvnw -B versions:set -DnewVersion="$VERSIONING_GIT_TAG" -DprocessAllModules
+  ./mvnw -B versions:commit -DprocessAllModules
 
 elif [[ "$GITHUB_REF" == refs/pull/*/merge ]]; then
   export VERSIONING_GIT_BRANCH=${GITHUB_REF#refs/}
