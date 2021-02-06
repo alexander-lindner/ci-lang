@@ -81,6 +81,7 @@ TOKEN:
 | < QUOTE:"\"" > : STRING_STATE
 | < IF: "if" >
 | < IS: "~" (<ID>)+ >
+| < REGEXPREFIX: "&" >
 | < HEREDOC_JAVA: "```java" > : HEREDOC_JAVA_STATE
 | < HEREDOC_JAVA_INLINE: "`" > : HEREDOC_JAVA_INLINE_STATE
 | < HEREDOC_BASH: "```bash" > : HEREDOC_BASH_STATE
@@ -416,6 +417,10 @@ String parameter():
 }
 {
     (
+        s=<REGEXPREFIX>
+        str=string()
+        {n.append("Regex.parse(\""+str+"\")");}
+        |
         s=<DOUBLE> {n.append(s.toString());}
         |
         str=stringConcatenated() {n.append(str);}

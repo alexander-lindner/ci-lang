@@ -429,22 +429,47 @@ public class IO {
 	 * find files recursive in a given path
 	 *
 	 * @param path    base path
-	 * @param pattern regex patern
+	 * @param pattern regex pattern
 	 *
 	 * @return Executor
 	 */
 	public static FileExecutor findFiles(final CiFile path, final String pattern) {
+		final Regex regex = Regex.fromGlobbing(pattern);
+		return IO.findFiles(path, regex);
+	}
+
+	/**
+	 * find files recursive in a given path
+	 *
+	 * @param path  base path
+	 * @param regex regex pattern
+	 *
+	 * @return Executor
+	 */
+	public static FileExecutor findFiles(final CiFile path, final Regex regex) {
 		try {
 			return new FileExecutor(
 					Files.walk(path.toPath())
 					     .filter(Files::isRegularFile)
-					     .filter(path1 -> path1.toAbsolutePath().toString().matches(pattern))
+					     .filter(path1 -> regex.matches(path1.toAbsolutePath().toString()))
 					     .collect(Collectors.toList())
 			);
 		} catch (final IOException e) {
-			Log.fatal(String.format("Couldn't walk to the directory '%s' to find files matching the pattern '%s'", path, pattern), e);
+			Log.fatal(String.format("Couldn't walk to the directory '%s' to find files matching the pattern '%s'", path, regex), e);
 		}
 		return new FileExecutor(new ArrayList<>());
+	}
+
+	/**
+	 * find files recursive in a given path
+	 *
+	 * @param path    base path
+	 * @param pattern regex patern
+	 *
+	 * @return Executor
+	 */
+	public static FileExecutor findFiles(final String path, final Regex pattern) {
+		return IO.findFiles(new CiFile(path), pattern);
 	}
 
 	/**
