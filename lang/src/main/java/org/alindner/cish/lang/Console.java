@@ -111,6 +111,14 @@ public class Console {
 		Console.print(jarFile.asList());
 	}
 
+	public static void print(final Table table) {
+		Console.print(table.render());
+	}
+
+	public static void print(final FancyTable table) {
+//		Console.print(table.render());
+	}
+
 	/**
 	 * types
 	 */
