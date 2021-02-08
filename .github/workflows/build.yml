@@ -28,7 +28,7 @@ jobs:
           java-version: 15
 
       - name: Cache local Maven repository
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.4
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
@@ -89,14 +89,14 @@ jobs:
         uses: ./.github/actions
 
       - name: Cache local Maven repository
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.4
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
       - name: Cache local cish cache repository
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.4
         with:
           path: ./.cish/
           key: ${{ runner.os }}-cish-${{ hashFiles('**/build.cish') }}-${{ hashFiles('**/pom.xml') }}
