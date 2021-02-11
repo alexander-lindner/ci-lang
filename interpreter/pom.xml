@@ -5,7 +5,7 @@
     <parent>
         <artifactId>cish</artifactId>
         <groupId>org.alindner.cish</groupId>
-        <version>0.3.4</version>
+        <version>v0.3.4-10-STABLE-d6ebd7e01bc92598c5274fd4bf5733700c0a88b1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 

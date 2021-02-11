@@ -1,0 +1,48 @@
+#!/bin/cish -ldebug
+
+
+#Console::print(IO::findFiles("interpreter/target/", "(.*)-dependencies.jar"))
+#Console::print(IO::findFiles("interpreter/target/", "*-v?.?.?-*-dependencies.jar"))
+#Console::print(IO::findFiles("interpreter/target/", &"(.*)-dependencies.jar"))
+
+#IO::listFiles("interpreter/target/").exec((file) -> {
+#  if(file.~Jar()) {
+#        if (file.getName().contains("-jar-with-dependencies")) {
+#            INTERPRETER="target/cish"
+#            IO::setContent(INTERPRETER, "#!/usr/bin/java -jar \\n")
+#            IO::addContent(INTERPRETER, file.getContent())
+#            IO::executable(INTERPRETER,true)
+#            IO::copy(INTERPRETER,"docker/build/cish")
+##BUG: a char on this line is needed
+#            INTERPRETER="target/cish-alpine"
+#            IO::setContent(INTERPRETER, "#!/opt/openjdk-15/bin/java -jar \\n")
+#            IO::addContent(INTERPRETER, file.getContent())
+#            IO::executable(INTERPRETER,true)
+#            IO::copy(INTERPRETER,"docker/build/cish-alpine")
+#        }
+#    }
+#});
+
+#jarFile = IO::findFiles("interpreter/target/", "(.*).jar")
+#Console::print(jarFile);
+
+table = new Table(3,3);
+table.add(1,2,3)
+table.add(4,5,6)
+table.add(7,8,9)
+
+Console::print(table)
+
+
+
+table2 = new Table();
+table2.add(1, 2, 3);
+table2.add(4, 5, 6, 7);
+table2.add(7, 8, 9);
+table2.add("1000000000000000");
+table2.withFirstLineAsHeader();
+table2.setBorder(Borders::simple);
+Console::print(table2.render());
+
+#Console::print("Hi");
+#Demo::greetings

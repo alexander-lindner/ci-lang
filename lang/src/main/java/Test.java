@@ -1,7 +1,6 @@
 import org.alindner.cish.lang.CiFile;
 import org.alindner.cish.lang.ControlStructures;
 import org.alindner.cish.lang.datatype.Array;
-import org.alindner.cish.lang.predicate.Predicates;
 
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -15,8 +14,7 @@ public class Test {
 		list.add(new CiFile("stop.zip"));
 		list.add(new CiFile("test.pptx"));
 		ControlStructures.each(list, System.out::println);
-		final Array<CiFile> l2 = list.filter(Predicates.isZip());
-		ControlStructures.each(l2, System.out::println);
+
 
 		final Function<String, String>           f    = (String str) -> str + "a";
 		final BiFunction<String, String, String> test = (String s1, String s2) -> s1 + s2;

@@ -2,8 +2,11 @@ package org.alindner.cish.interpreter;
 
 import lombok.extern.log4j.Log4j2;
 import org.alindner.cish.extension.Extension;
+import org.alindner.cish.extension.Type;
 import org.alindner.cish.lang.CiFile;
 import org.alindner.cish.lang.IO;
+import org.alindner.cish.lang.functions.predicate.CishPredicate;
+import org.alindner.cish.lang.functions.predicate.Predicates;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -19,9 +22,9 @@ import java.util.stream.Collectors;
 
 @Log4j2
 public class ExtensionManager {
-	private final Map<Extension, CiFile>                        queue     = new HashMap<>();
-	private final Map<Extension, Pair<Version, Extension.Type>> conflicts = new HashMap<>();
-	private final Map<Extension, CiFile>                        loaded    = new HashMap<>();
+	private final Map<Extension, CiFile>              queue     = new HashMap<>();
+	private final Map<Extension, Pair<Version, Type>> conflicts = new HashMap<>();
+	private final Map<Extension, CiFile>              loaded    = new HashMap<>();
 
 	public void readIn(final CiFile extensionsDir) {
 		if (!extensionsDir.exists() && !extensionsDir.isDirectory()) {
@@ -74,7 +77,7 @@ public class ExtensionManager {
 		}
 		final Version currentExtensionVersion = new Version(currentExtension.getVersion());
 		if (this.conflicts.containsKey(currentExtension)) {
-			final Pair<Version, Extension.Type> pair = this.conflicts.get(currentExtension);
+			final Pair<Version, Type> pair = this.conflicts.get(currentExtension);
 			if (!new Version(currentExtension.getVersion()).compareTo(pair.a, pair.b)) {
 				throw new Error(String.format(
 						"The extension %s conflicts with already loaded extensions. Restriction: [%s %s %s",
@@ -122,6 +125,18 @@ public class ExtensionManager {
 		                  .stream()
 		                  .flatMap(extension -> extension.getClasses().stream())
 		                  .collect(Collectors.toList());
+	}
+
+	public List<CishPredicate> getPredicates() {
+		return this.loaded.keySet()
+		                  .stream()
+		                  .flatMap(extension -> extension.getPredicates().stream())
+		                  .collect(Collectors.toList());
+	}
+
+	public void readPredicatesIn() {
+		this.getPredicates().forEach(Predicates::addPredicate);
+
 	}
 }
 
@@ -180,7 +195,7 @@ class Version implements Comparable<Version> {
 		return this.compareTo((Version) that) == 0;
 	}
 
-	public boolean compareTo(final Version that, final Extension.Type type) {
+	public boolean compareTo(final Version that, final Type type) {
 		final int compareTo = this.compareTo(that);
 		switch (type) {
 			case EQUALS:
@@ -255,14 +270,7 @@ class Pair<A, B> {
 		} else if (!this.a.equals(other.a)) {
 			return false;
 		}
-		if (this.b == null) {
-			if (other.b != null) {
-				return false;
-			}
-		} else if (!this.b.equals(other.b)) {
-			return false;
-		}
-		return true;
+		return this.b == null ? other.b == null : this.b.equals(other.b);
 	}
 
 	public boolean isInstance(final Class<?> classA, final Class<?> classB) {

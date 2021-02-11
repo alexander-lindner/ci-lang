@@ -125,6 +125,7 @@ public class Interpreter {
 		Interpreter.directories.forEach(ciFile -> {
 			Interpreter.manager.readIn(ciFile);
 			Interpreter.manager.readDependenciesIn();
+			Interpreter.manager.readPredicatesIn();
 		});
 	}
 

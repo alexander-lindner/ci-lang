@@ -1,7 +1,6 @@
 package org.alindner.cish.lang;
 
-import org.alindner.cish.lang.predicate.Is;
-import org.alindner.cish.lang.predicate.Predicates;
+import org.alindner.cish.lang.functions.predicate.Is;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
@@ -223,10 +222,10 @@ class IOTest {
 	void isZip() {
 		final CiFile jarFile = Download.maven("commons-io", "2.8.0");
 		assertNotNull(jarFile);
-		assertTrue(Is.is(jarFile, Predicates.isZip()));
+		assertTrue(Is.is(jarFile, "isZip"));
 		final CiFile tmpDir   = IO.createTempDir();
 		final CiFile testFile = tmpDir.touch("test.zip");
-		assertFalse(Is.is(testFile, Predicates.isZip()));
+		assertFalse(Is.is(testFile, "isZip"));
 	}
 
 	@Test
@@ -235,7 +234,7 @@ class IOTest {
 		final CiFile testDir  = file.mkdir("test/alex/true/1/d/// s/ /");
 		final CiFile testFile = testDir.touch("testFile.zip");
 		testFile.setContent("hallo");
-		assertFalse(Is.is(testFile, Predicates.isZip()));
+		assertFalse(Is.is(testFile, "isZip"));
 		assertTrue(new File(file, "test/alex/true/1/d/// s/ /testFile.zip").isFile());
 	}
 }

@@ -1,26 +1,24 @@
 package org.alindner.cish.lang;
 
-import com.inamik.text.tables.Cell;
 import lombok.Builder;
 import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static com.inamik.text.tables.Cell.Functions.HORIZONTAL_CENTER;
-import static com.inamik.text.tables.Cell.Functions.VERTICAL_CENTER;
-
 public class FancyTable {
-	private final List<List<String>> data   = new ArrayList<>();
-	private final int                rows;
-	private final boolean            growing;
-	private final List<List<Option>> options;
-	private       int                cols;
-	private       boolean            header = false;
-	private       Chars              border = Chars.DOUBLE_LINE;
+	private final List<List<String>>       data            = new ArrayList<>();
+	private final int                      rows;
+	private final boolean                  growing;
+	private final List<List<Option>>       options;
+	private       int                      cols;
+	private       boolean                  header          = false;
+	private       Chars                    border          = Chars.DOUBLE_LINE;
+	private       EnumSet<Option.Floating> defaultFloating = EnumSet.copyOf(Option.Floating.ALL);
 
 	public FancyTable(final int rows, final int cols) {
 		this.growing = false;
@@ -54,8 +52,15 @@ public class FancyTable {
 		table2.add("1000000000000000");
 		table2.withFirstLineAsHeader();
 		table2.setBorder(Chars.SINGLE_LINE);
+		table2.setFloating(EnumSet.of(
+				Option.Floating.VERTICAL_CENTER
+		));
 		table2.renderTheTable();
 //		System.out.println(table2.render());
+	}
+
+	private void setFloating(final EnumSet<Option.Floating> i) {
+		this.defaultFloating = i;
 	}
 
 
@@ -69,8 +74,10 @@ public class FancyTable {
 			IntStream.range(0, rowSize).forEach(i -> this.options.add(new ArrayList<>()));
 
 			for (final List<Option> col : this.options) {
-				final int size = this.cols - col.size();
-				IntStream.range(0, size).forEach(i -> col.add(Option.standard()));
+				final int    size = this.cols - col.size();
+				final Option o    = Option.standard();
+				o.setFloating(this.defaultFloating);
+				IntStream.range(0, size).forEach(i -> col.add(o));
 			}
 		}
 	}
@@ -94,8 +101,6 @@ public class FancyTable {
 		if (cols.size() > this.cols) {
 			this.cols = cols.size();
 		}
-
-
 		this.data.add(cols);
 		return this;
 	}
@@ -116,7 +121,7 @@ public class FancyTable {
 
 	void renderTheTable() {
 		this.fixSizes();
-		new Generator(this.data, this.cols, this.border).generate();
+		new Generator(this.data, this.cols, this.border, this.options).generate();
 	}
 
 	static class Generator {
@@ -125,12 +130,14 @@ public class FancyTable {
 		private final List<List<String>> data;
 		private final int                cols;
 		private final Chars              border;
+		private final List<List<Option>> options;
 		List<List<Integer>> lengths;
 		boolean             heading = true;
 		boolean             footer  = true;
 
-		public Generator(final List<List<String>> data, final int cols, final Chars border) {
+		public Generator(final List<List<String>> data, final int cols, final Chars border, final List<List<Option>> options) {
 			this.data = data;
+			this.options = options;
 			this.cols = cols;
 			this.border = border;
 			this.lengths = data.stream().map(strings -> strings.stream().map(String::length).collect(Collectors.toList())).collect(Collectors.toList());
@@ -164,7 +171,7 @@ public class FancyTable {
 				for (int j = 0; j < strings.size(); j++) {
 					final String s = strings.get(j);
 					tmpList.add("|");
-					tmpList.add(this.addPadding(s, j));
+					tmpList.add(this.addPadding(s, j, this.options.get(i).get(j).getFloating()));
 				}
 				tmpList.add("|");
 				this.table.add(tmpList);
@@ -199,10 +206,17 @@ public class FancyTable {
 			this.table.add(separatorList);
 		}
 
-		private String addPadding(final String s, final int index) {
+		private String addPadding(final String s, final int index, final EnumSet<Option.Floating> floating) {
 			if (s.length() < this.maxSizesPerCol.get(index)) {
 				final int size = this.maxSizesPerCol.get(index) - s.length();
-				return s + new String(new char[size]).replace("\0", " ");
+				if (floating.contains(Option.Floating.HORIZONTAL_LEFT)) {
+					return s + new String(new char[size]).replace("\0", " ");
+				} else if (floating.contains(Option.Floating.HORIZONTAL_RIGHT)) {
+					return new String(new char[size]).replace("\0", " ") + s;
+				} else {
+					final String background = new String(new char[size]).replace("\0", " ");
+					return background.substring(0, background.length() / 2) + s + background.substring(background.length() / 2);
+				}
 			}
 			return s;
 		}
@@ -268,18 +282,22 @@ public class FancyTable {
 	@Builder
 	private static class Option {
 		@Builder.Default
-		char          background = ' ';
+		char              background = ' ';
 		@Builder.Default
-		int           width      = 3;
+		int               width      = 3;
 		@Builder.Default
-		int           height     = 3;
+		int               height     = 3;
 		@Builder.Default
-		Cell.Function horizontal = HORIZONTAL_CENTER;
-		@Builder.Default
-		Cell.Function vertical   = VERTICAL_CENTER;
+		EnumSet<Floating> floating   = Floating.ALL;
 
 		public static Option standard() {
 			return Option.builder().build();
 		}
+
+		enum Floating {
+			VERTICAL_LEFT, VERTICAL_RIGHT, VERTICAL_CENTER, HORIZONTAL_LEFT, HORIZONTAL_CENTER, HORIZONTAL_RIGHT;
+			public static final EnumSet<Floating> ALL = EnumSet.allOf(Floating.class);
+		}
+
 	}
 }
