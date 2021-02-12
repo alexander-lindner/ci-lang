@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile default="true" name="Default" enabled="true" />
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="cish" target="8" />
+      <module name="compiler" target="11" />
+      <module name="demoExtension" target="11" />
+      <module name="extension" target="8" />
+      <module name="interpreter" target="9" />
+      <module name="lang" target="9" />
+    </bytecodeTargetLevel>
+  </component>
+</project>
