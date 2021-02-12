@@ -22,7 +22,7 @@
     <parent>
         <artifactId>cish</artifactId>
         <groupId>org.alindner.cish</groupId>
-        <version>v0.3.4-10</version>
+        <version>v0.3.5</version>
     </parent>
     <artifactId>compiler</artifactId>
 
