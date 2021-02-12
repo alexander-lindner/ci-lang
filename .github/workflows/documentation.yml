@@ -41,8 +41,8 @@ jobs:
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH: gh-pages
-          FOLDER: ./compiler/target/site/apidocs/
-          TARGET_FOLDER: ./docs/compiler/
+          folder: ./compiler/target/site/apidocs/
+          target-folder: ./docs/compiler/
           CLEAN: true
 
       - name: Deploy doc "interpreter"
@@ -50,8 +50,8 @@ jobs:
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH: gh-pages
-          FOLDER: ./interpreter/target/site/apidocs/
-          TARGET_FOLDER: ./docs/interpreter/
+          folder: ./interpreter/target/site/apidocs/
+          target-folder: ./docs/interpreter/
           CLEAN: true
 
       - name: Deploy doc "lang"
@@ -59,8 +59,8 @@ jobs:
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH: gh-pages
-          FOLDER: ./lang/target/site/apidocs/
-          TARGET_FOLDER: ./docs/lang/
+          folder: ./lang/target/site/apidocs/
+          target-folder: ./docs/lang/
           CLEAN: true
 
       - name: Deploy doc "extension"
@@ -68,6 +68,6 @@ jobs:
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH: gh-pages
-          FOLDER: ./extension/target/site/apidocs/
-          TARGET_FOLDER: ./docs/extension/
+          folder: ./extension/target/site/apidocs/
+          target-folder: ./docs/extension/
           CLEAN: true
