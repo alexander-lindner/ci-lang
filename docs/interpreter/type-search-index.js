@@ -1,0 +1,1 @@
+typeSearchIndex = [{"l":"All Classes","u":"allclasses-index.html"},{"p":"org.alindner.cish.interpreter","l":"ExtensionManager"},{"p":"org.alindner.cish.interpreter","l":"Interpreter"}];updateSearchResults();
