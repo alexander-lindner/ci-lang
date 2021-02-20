@@ -1,9 +1,33 @@
 #!/bin/cish -ldebug
 
 
-#Console::print(IO::findFiles("interpreter/target/", "(.*)-dependencies.jar"))
-#Console::print(IO::findFiles("interpreter/target/", "*-v?.?.?-*-dependencies.jar"))
-#Console::print(IO::findFiles("interpreter/target/", &"(.*)-dependencies.jar"))
+Console::print(IO::findFiles(".", "*-dependencies.jar"))
+Console::print(IO::findFiles(".", "*/compiler-v?.?.?-*-dependencies.jar"))
+Console::print(IO::findFiles(".", &"(.*)-dependencies.jar"))
+
+regexVariable = &"(.*)-dependencies.jar"
+if(regexVariable.matches("dependencies.jar")){
+ Console::print("Matches dependencies.jar")
+}
+
+if(regexVariable.matches("lang-v0.3.5-STABLE-5e542e8e79b77a52b40ebf99bae6c8e35e131b76-jar-with-dependencies.jar")){
+ Console::print("Matches lang-v0.3.5-STABLE-5e542e8e79b77a52b40ebf99bae6c8e35e131b76-jar-with-dependencies.jar")
+}
+
+#if(&"(.*)-dependencies.jar".matches("jar-with-dependencies.jar")){
+# Console::print("Matches jar-with-dependencies.jar")
+#}
+
+
+IO::findFiles(".", regexVariable).exec((file) -> {
+  Console::print(regexVariable.replaceAll(file,"$1"))
+});
+
+regexVariableForExtracting = &"(.*)/(.*)jar-with-dependencies.jar"
+IO::findFiles(".", regexVariable).exec((file) -> {
+  Console::print(regexVariableForExtracting.extract(file.toString(),2))
+});
+
 
 #IO::listFiles("interpreter/target/").exec((file) -> {
 #  if(file.~Jar()) {
@@ -25,24 +49,6 @@
 
 #jarFile = IO::findFiles("interpreter/target/", "(.*).jar")
 #Console::print(jarFile);
-
-table = new Table(3,3);
-table.add(1,2,3)
-table.add(4,5,6)
-table.add(7,8,9)
-
-Console::print(table)
-
-
-
-table2 = new Table();
-table2.add(1, 2, 3);
-table2.add(4, 5, 6, 7);
-table2.add(7, 8, 9);
-table2.add("1000000000000000");
-table2.withFirstLineAsHeader();
-table2.setBorder(Borders::simple);
-Console::print(table2.render());
 
 #Console::print("Hi");
 #Demo::greetings

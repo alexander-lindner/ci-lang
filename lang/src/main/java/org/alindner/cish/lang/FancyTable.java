@@ -55,8 +55,13 @@ public class FancyTable {
 		table2.setFloating(EnumSet.of(
 				Option.Floating.VERTICAL_CENTER
 		));
+		table2.group(0, 0, 0, 3);
 		table2.renderTheTable();
 //		System.out.println(table2.render());
+	}
+
+	private void group(final int startRow, final int endRow, final int startCol, final int endCol) {
+
 	}
 
 	private void setFloating(final EnumSet<Option.Floating> i) {

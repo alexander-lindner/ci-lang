@@ -11,11 +11,6 @@
         <module name="interpreter" />
         <module name="extension" />
         <module name="compiler" />
-      </profile>
-      <profile name="Annotation profile for cish" enabled="true">
-        <sourceOutputDir name="../target/generated-sources/annotations" />
-        <sourceTestOutputDir name="../target/generated-test-sources/test-annotations" />
-        <outputRelativeToContentRoot value="true" />
         <module name="lang" />
       </profile>
     </annotationProcessing>

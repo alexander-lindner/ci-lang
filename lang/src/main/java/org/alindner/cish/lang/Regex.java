@@ -3,6 +3,7 @@ package org.alindner.cish.lang;
 import lombok.Data;
 import org.apache.commons.lang.builder.ToStringBuilder;
 
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -56,6 +57,58 @@ public class Regex {
 	 */
 	public boolean matches(final String toString) {
 		return this.regex.matcher(toString).matches();
+	}
+
+	/**
+	 * Replace all occurrence of the given regex
+	 *
+	 * @param baseFile    base string where the operation should be performed on
+	 * @param replacement replacement string
+	 *
+	 * @return replaced string
+	 */
+	public String replaceAll(final CiFile baseFile, final String replacement) {
+		return this.replaceAll(baseFile.toString(), replacement);
+	}
+
+	/**
+	 * Replace all occurrence of the given regex
+	 *
+	 * @param baseString  base string where the operation should be performed on
+	 * @param replacement replacement string
+	 *
+	 * @return replaced string
+	 */
+	public String replaceAll(final String baseString, final String replacement) {
+		return this.regex.matcher(baseString).replaceAll(replacement);
+	}
+
+	/**
+	 * return the extracted string from given baseString
+	 *
+	 * @param file file name where the operation should be performed on
+	 * @param i    group number
+	 *
+	 * @return extracted string
+	 */
+	public String extract(final CiFile file, final int i) {
+		return this.extract(file.toString(), i);
+	}
+
+	/**
+	 * return the extracted string from given baseString
+	 *
+	 * @param baseString base string where the operation should be performed on
+	 * @param i          group number
+	 *
+	 * @return extracted string
+	 */
+	public String extract(final String baseString, final int i) {
+		final Matcher g = this.regex.matcher(baseString);
+		if (g.find()) {
+			return g.group(i);
+		}
+		return "";
 	}
 
 	@Override

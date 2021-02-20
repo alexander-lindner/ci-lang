@@ -131,7 +131,7 @@ String Root() :
 	[<EOF>]
 	{
         if(this.renderClass) {
-            return "import org.alindner.cish.lang.*; import org.alindner.cish.lang.predicate.*; import static org.alindner.cish.lang.predicate.Is.*;   public class Main { public static void main(String... args) throws Exception { "+mainContent.toString()+"}}";
+            return "import org.alindner.cish.lang.*; import org.alindner.cish.lang.functions.predicate.*;   public class Main { public static void main(String... args) throws Exception { "+mainContent.toString()+"}}";
         } else {
         	return mainContent.toString();
         }
