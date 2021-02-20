@@ -15,7 +15,7 @@
     <parent>
         <groupId>org.alindner.cish</groupId>
         <artifactId>cish</artifactId>
-        <version>v0.3.5</version>
+        <version>v0.3.6</version>
     </parent>
 
     <artifactId>extension</artifactId>
