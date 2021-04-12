@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -30,14 +31,14 @@ public class Parameter {
 	/**
 	 * the script which gets executed
 	 */
-	public static CiFile              script;
+	public static Path                script;
 
 	/**
 	 * get the script which gets executed
 	 *
 	 * @return CiFile representation of the script
 	 */
-	public static CiFile getScript() {
+	public static Path getScript() {
 		return Parameter.script;
 	}
 

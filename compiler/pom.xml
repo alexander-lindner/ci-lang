@@ -16,7 +16,17 @@
             <version>2.8.0</version>
             <scope>compile</scope>
         </dependency>
-
+        <dependency>
+            <groupId>org.reflections</groupId>
+            <artifactId>reflections</artifactId>
+            <version>0.9.12</version>
+        </dependency>
+        <dependency>
+            <groupId>org.alindner.cish</groupId>
+            <artifactId>extension</artifactId>
+            <version>v0.3.6</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <parent>
@@ -28,8 +38,8 @@
 
 
     <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
     </properties>
     <build>
         <plugins>
@@ -48,8 +58,8 @@
                         <configuration>
                             <jdkVersion>1.8</jdkVersion>
                             <javadocFriendlyComments>true</javadocFriendlyComments>
-                            <packageName>org.alindner.cish.compiler.jj</packageName>
-                            <sourceDirectory>src/main/java/org/alindner/cish/compiler/jj/</sourceDirectory>
+                            <packageName>org.alindner.cish.compiler.precompiler.jj</packageName>
+                            <sourceDirectory>src/main/java/org/alindner/cish/compiler/precompiler/jj/</sourceDirectory>
                             <outputDirectory>${project.build.directory}/generated-sources/compiler</outputDirectory>
                         </configuration>
                     </execution>

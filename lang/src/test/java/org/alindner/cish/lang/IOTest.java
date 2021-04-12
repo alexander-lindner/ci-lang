@@ -1,6 +1,6 @@
 package org.alindner.cish.lang;
 
-import org.alindner.cish.lang.functions.predicate.Is;
+import org.alindner.cish.compiler.postcompiler.predicates.Is;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;

@@ -1,13 +1,13 @@
-package org.alindner.cish.compiler;
+package org.alindner.cish.compiler.precompiler;
 
 import lombok.Getter;
-import org.alindner.cish.compiler.jj.ParseException;
-import org.alindner.cish.compiler.jj.Parser;
+import org.alindner.cish.compiler.precompiler.jj.ParseException;
+import org.alindner.cish.compiler.precompiler.jj.Parser;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.StringReader;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
@@ -18,11 +18,11 @@ import java.util.Map;
 public class CishCompiler {
 
 	private final boolean debug;
-	private final File    base;
+	private final Path    base;
 	private       String  content;
 	private       Parser  parser;
 
-	public CishCompiler(final boolean debug, final File base) {
+	public CishCompiler(final boolean debug, final Path base) {
 		this.debug = debug;
 		this.base = base;
 	}
@@ -34,8 +34,8 @@ public class CishCompiler {
 	 *
 	 * @throws ParseException syntax error
 	 */
-	public CishCompiler compile(final File file) throws ParseException, FileNotFoundException {
-		this.parser = new Parser(new FileInputStream(file), false, this.base);
+	public CishCompiler compile(final Path file) throws ParseException, FileNotFoundException {
+		this.parser = new Parser(new FileInputStream(file.toFile()), false, this.base);
 		this.doCompile();
 		return this;
 	}

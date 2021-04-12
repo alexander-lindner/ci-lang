@@ -7,20 +7,18 @@ import net.sourceforge.argparse4j.inf.ArgumentParser;
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.alindner.cish.compiler.Compiler;
-import org.alindner.cish.compiler.Utils;
-import org.alindner.cish.compiler.jj.ParseException;
-import org.alindner.cish.lang.CiFile;
+import org.alindner.cish.compiler.precompiler.jj.ParseException;
+import org.alindner.cish.compiler.utils.Utils;
 import org.alindner.cish.lang.Parameter;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.config.Configurator;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,18 +33,13 @@ import java.util.Map;
  */
 @Log4j2
 public class Interpreter {
-	final static    List<CiFile>        directories      = List.of(
-			new CiFile("~/.cish/extensions/"),
-			new CiFile("/var/lib/cish/extensions/"),
-			new CiFile("./.cish/extensions/")
-	);
-	final static    ExtensionManager    manager          = new ExtensionManager();
 	protected final List<String>        argsList         = new ArrayList<>();
 	protected final Map<String, String> parameters       = new HashMap<>();
 	protected final List<String>        simpleParameters = new ArrayList<>();
 	private final   boolean             debug;
 	private final   boolean             verbose;
 	private         Namespace           args             = null;
+	private         Compiler            compiler;
 
 	/**
 	 * constructors which sets also the log level
@@ -81,7 +74,6 @@ public class Interpreter {
 				this.debug = false;
 				break;
 		}
-		Interpreter.loadExtensions();
 		this.loadFiles();
 	}
 
@@ -110,24 +102,15 @@ public class Interpreter {
 	 * @throws InvocationTargetException error when invoking script
 	 * @throws NoSuchAlgorithmException  error when invoking script
 	 */
-	public static void load(final File root) throws ClassNotFoundException, IllegalAccessException, MalformedURLException, NoSuchMethodException, InvocationTargetException, NoSuchAlgorithmException {
-		final URLClassLoader classLoader = URLClassLoader.newInstance(new URL[]{Utils.getCompileDirOfShellScript(root).toURI().toURL()});
+	public void load(final Path root) throws ClassNotFoundException, IllegalAccessException, MalformedURLException, NoSuchMethodException, InvocationTargetException, NoSuchAlgorithmException {
+		Interpreter.log.debug("Creating new classPath of this directory: {} ", () -> Utils.getCompileDirOfShellScript(root).toUri());
+		final URLClassLoader classLoader = this.compiler.getClassPath();
 		final Class<?>       cls         = Class.forName("Main", true, classLoader);
 		final Method         meth        = cls.getMethod("main", String[].class);
 		final String[]       params      = null;
 		meth.invoke(null, (Object) params);
 	}
 
-	/**
-	 * load all extensions
-	 */
-	private static void loadExtensions() {
-		Interpreter.directories.forEach(ciFile -> {
-			Interpreter.manager.readIn(ciFile);
-			Interpreter.manager.readDependenciesIn();
-			Interpreter.manager.readPredicatesIn();
-		});
-	}
 
 	/**
 	 * loads, compiles and executes the given cish scrips
@@ -137,11 +120,11 @@ public class Interpreter {
 	 */
 	private void loadFiles() throws IOException, ParseException {
 		for (final String fileName : this.args.<String>getList("file")) {
-			final File f = new File(fileName);
-			Interpreter.manager.copyToTargetDir(new CiFile(Utils.getCompileDirOfShellScript(f)));
-			final Map<String, String> map = new Compiler(this.debug, f).loadScriptToMemory().compileCish().compileJava(Interpreter.manager.getImports()).getJavaContent();
+			final Path f = Path.of(fileName);
+
+			this.compiler = new Compiler(this.debug, f).compileToByteCode();
 			try {
-				Interpreter.load(f);
+				this.load(f);
 			} catch (final ClassNotFoundException | IllegalAccessException | MalformedURLException | NoSuchMethodException | InvocationTargetException | NoSuchAlgorithmException e) {
 				Interpreter.log.fatal("Error during loading file " + f, e);
 			}
@@ -176,7 +159,7 @@ public class Interpreter {
 			Parameter.params = this.simpleParameters;
 			Parameter.simpleArgs = this.argsList;
 			Parameter.extendedParams = this.parameters;
-			Parameter.script = new CiFile(this.args.<String>getList("file").get(0));
+			Parameter.script = Path.of(this.args.<String>getList("file").get(0));
 		} catch (final ArgumentParserException e) {
 			parser.handleError(e);
 			System.exit(1);

@@ -1,6 +1,6 @@
-package org.alindner.cish.lang.functions.predicate;
+package org.alindner.cish.compiler.postcompiler.predicates;
 
-import org.alindner.cish.lang.Log;
+import lombok.extern.log4j.Log4j2;
 
 import java.util.Map;
 import java.util.function.Predicate;
@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
  * <p>
  * to do so, it access all registered class from {@code Predicates#predicates}.
  */
+@Log4j2
 public class Is {
 	/**
 	 * checks for if there is an matching predicate and executes the predicate with given object and returns true, if it matches
@@ -28,7 +29,7 @@ public class Is {
 				                     .stream()
 				                     .map(
 						                     classMapEntry -> Map.of(
-								                     "is" + Is.toCamelCase(classMapEntry.getKey().getName()),
+								                     "is" + Is.toCamelCase(classMapEntry.getKey()),
 								                     classMapEntry.getValue()
 						                     )
 				                     )
@@ -46,7 +47,7 @@ public class Is {
 				return pred.test(obj);
 			}
 		}
-		Log.fatal("Predicate wasn't found.", new Exception());
+		Is.log.fatal("Predicate wasn't found.", new Exception());
 		return false;
 	}
 

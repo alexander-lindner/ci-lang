@@ -5,12 +5,13 @@ options
     LOOKAHEAD = 2048;
 }
 PARSER_BEGIN(Parser)
-package org.alindner.cish.compiler.jj;
+package org.alindner.cish.compiler.precompiler.jj;
 
 import java.nio.charset.Charset;
 import java.util.*;
 import java.io.*;
-import org.alindner.cish.compiler.*;
+import java.nio.file.*;
+import org.alindner.cish.compiler.precompiler.*;import org.alindner.cish.compiler.utils.Utils;
 
 @lombok.extern.log4j.Log4j2
 public class Parser {
@@ -21,7 +22,7 @@ public class Parser {
 	private final List<String> require = new ArrayList<>();
 	private final Map<String, String> bash = new HashMap<>();
 	private boolean renderClass = true;
-	private File base;
+	private Path base;
 
 	public List<String> getJavaLines(){
 		return this.java;
@@ -39,11 +40,11 @@ public class Parser {
 		return this.bash;
 	}
 
-	public Parser(InputStream is, boolean dummy,File base) {
+	public Parser(InputStream is, boolean dummy,Path base) {
 		this(is, Charset.defaultCharset());
 		this.base = base;
 	}
-	public Parser(Reader reader, boolean renderClass,File base) {
+	public Parser(Reader reader, boolean renderClass,Path base) {
 		this(reader);
 		this.renderClass=renderClass;
 		this.base = base;
@@ -173,15 +174,15 @@ String load():
             <LEFT_PAREN>
             str=string()
             {
-                try {
-                	CishCompiler c = new CishCompiler(log.isDebugEnabled(),base).compile(Utils.loadTextContent(str),false); //todo
-                    str = c.getContent();
-                    imports.addAll(c.getImports());
-                    require.addAll(c.getRequires());
-                } catch (IOException e) {
-                 log.error("Error when including file",e);
-                }
-            }
+    try {
+    	CishCompiler c = new CishCompiler(log.isDebugEnabled(),base).compile(Utils.loadTextContent(str),false); //todo
+        str = c.getContent();
+        imports.addAll(c.getImports());
+        require.addAll(c.getRequires());
+    } catch (IOException e) {
+     log.error("Error when including file",e);
+    }
+}
             <RIGHT_PAREN>
         )
         |
@@ -191,8 +192,8 @@ String load():
             str=string()
             {
                 require.add(str);
-                File b = Utils.getCompileDirOfShellScript(base,new File(str));
-                str="CishUtils.require(\""+base.getAbsolutePath()+"\",\""+b.getAbsolutePath().replaceAll(base.getAbsolutePath(),"")+"\");";
+                Path b = Utils.getCompileDirOfShellScript(base,Path.of(str));
+                str="CishUtils.require(\""+base.toAbsolutePath().toString()+"\",\""+b.toAbsolutePath().toString().replaceAll(base.toAbsolutePath().toString(),"")+"\");";
             }
             <RIGHT_PAREN>
         )
@@ -258,7 +259,7 @@ String heredoc():
 
     String fileName = Utils.hash(str);
     bash.put(fileName,str);
-    return String.format("Bash.runScript(\"%s\",\"%s\");",base.getAbsolutePath(), fileName);
+    return String.format("Bash.runScript(\"%s\",\"%s\");",base.toAbsolutePath().toString(), fileName);
 
     return "";
 }
@@ -498,7 +499,6 @@ String variable():
     (<SEMICOLON>)*
     {return n.toString(); }
 }
-
 String ifElse() :
 {
   String cond = "";

@@ -1,9 +1,9 @@
-package org.alindner.cish.compiler;
+package org.alindner.cish.compiler.utils;
 
 import lombok.extern.log4j.Log4j2;
+import org.alindner.cish.compiler.Props;
 
 import javax.xml.bind.DatatypeConverter;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -93,16 +93,18 @@ public class Utils {
 	 * @param jarName jar path
 	 * @param target  target directory
 	 */
-	public static void copyClassesFromJar(final String jarName, final File target) {
+	public static void copyClassesFromJar(final String jarName, final Path target) {
 		try (final ZipInputStream zipIn = new ZipInputStream(new FileInputStream(jarName))) {
+			if (Files.notExists(target)) {
+				Files.createDirectories(target);
+			}
 			for (ZipEntry ze; (ze = zipIn.getNextEntry()) != null; ) {
-				final Path resolvedPath = target.toPath().resolve(ze.getName());
+				final Path resolvedPath = target.resolve(ze.getName());
 				if (ze.isDirectory()) {
 					if (!resolvedPath.toFile().exists()) {
 						Files.createDirectories(resolvedPath);
 					}
 				} else {
-
 					if (!resolvedPath.toFile().exists()) {
 						Files.createDirectories(resolvedPath);
 					}
@@ -121,10 +123,8 @@ public class Utils {
 	 *
 	 * @return cached dir
 	 */
-	public static File getCompileDirOfShellScript(final File file) {
-		final File sourceFile = new File(Props.root, "p" + Utils.hash(file.getAbsoluteFile().getName()));
-		sourceFile.mkdirs();
-		return sourceFile;
+	public static Path getCompileDirOfShellScript(final Path file) {
+		return Utils.getCompileDirOfShellScript(Props.root, file);
 	}
 
 	/**
@@ -135,9 +135,16 @@ public class Utils {
 	 *
 	 * @return cached dir
 	 */
-	public static File getCompileDirOfShellScript(final File parent, final File file) {
-		final File sourceFile = new File(parent, "p" + Utils.hash(file.getAbsoluteFile().getName()));
-		sourceFile.mkdirs();
+	public static Path getCompileDirOfShellScript(final Path parent, final Path file) {
+		final Path sourceFile = parent.resolve("p" + Utils.hash(file.toAbsolutePath().getFileName().toString()));
+		try {
+			if (Files.notExists(sourceFile)) {
+				Files.createDirectory(sourceFile);
+			}
+		} catch (final IOException e) {
+			Utils.log.fatal("Couldn't create compile directory:{}", sourceFile);
+			throw new Error(e);
+		}
 		return sourceFile;
 	}
 }

@@ -2,22 +2,21 @@ package org.alindner.cish.compiler;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
-import org.alindner.cish.compiler.jj.ParseException;
-import org.apache.logging.log4j.core.util.FileUtils;
+import org.alindner.cish.compiler.postcompiler.JavaCompiler;
+import org.alindner.cish.compiler.postcompiler.extension.ExtensionManager;
+import org.alindner.cish.compiler.precompiler.CishCompiler;
+import org.alindner.cish.compiler.precompiler.jj.ParseException;
+import org.alindner.cish.compiler.utils.Utils;
+import org.apache.commons.io.FilenameUtils;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URL;
+import java.net.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
+import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
-
-import static org.apache.commons.io.FileUtils.copyFile;
-import static org.apache.commons.io.FileUtils.copyURLToFile;
 
 /**
  * the main class for compiling a .cish file to (java) byte code
@@ -27,8 +26,14 @@ import static org.apache.commons.io.FileUtils.copyURLToFile;
 @Log4j2
 @Getter
 public class Compiler {
-	final         File                base;
-	private final File                file;
+	final static  List<Path>          directories = List.of(
+			Path.of("~/.cish/extensions/"),
+			Path.of("/var/lib/cish/extensions/"),
+			Path.of("./.cish/extensions/")
+	);
+	final         Path                base;
+	final         ExtensionManager    manager     = new ExtensionManager();
+	private final Path                file;
 	private final boolean             debug;
 	private final Map<String, String> javaContent = new TreeMap<>();
 	private final List<String>        imports     = new ArrayList<>();
@@ -38,14 +43,14 @@ public class Compiler {
 	private       String              content;
 	private       String              pkg         = null;
 
-	public Compiler(final boolean debug, final File file) {
-		this.file = file;
+	public Compiler(final boolean debug, final Path file) {
+		this.file = file.toAbsolutePath().normalize();
 		this.debug = debug;
 		this.base = Utils.getCompileDirOfShellScript(Props.root, this.file);
 	}
 
-	public Compiler(final boolean debug, final File base, final File file) {
-		this.file = file;
+	public Compiler(final boolean debug, final Path base, final Path file) {
+		this.file = file.toAbsolutePath().normalize();
 		this.debug = debug;
 		this.base = Utils.getCompileDirOfShellScript(base, this.file);
 	}
@@ -57,12 +62,12 @@ public class Compiler {
 	 *
 	 * @return class name
 	 */
-	static List<String> fileToClass(final File file) {
-		switch (FileUtils.getFileExtension(file)) {
+	static List<String> fileToClass(final Path file) {
+		switch (FilenameUtils.getExtension(file.toString())) {
 			case "java":
 				final List<String> list = new ArrayList<>();
 				try {
-					final Matcher matcher = Props.regexClassPattern.matcher(Files.readString(file.toPath()));
+					final Matcher matcher = Props.regexClassPattern.matcher(Files.readString(file));
 
 					while (matcher.find()) {
 						list.add(matcher.group(2));
@@ -72,12 +77,65 @@ public class Compiler {
 				}
 				return list;
 			case "jar":
-				return Utils.getClassesFromJar(file.getAbsolutePath())
+				return Utils.getClassesFromJar(file.toAbsolutePath().toString())
 				            .stream()
 				            .filter(s -> !s.contains("$"))
 				            .collect(Collectors.toList());
 		}
 		return null;
+	}
+
+	/**
+	 * copies all classes from <code>org.alindner.cish.lang</code> to the given source dir.
+	 * <p>
+	 * if this method is called from within the jar file, it will use itself to find the lang package. If it is called from the IDE like Intellij, the files are copied from mavens
+	 * <code>target</code> directory
+	 *
+	 * @param base used within jar only. Detect the current path where it should copies files from
+	 *
+	 * @return
+	 *
+	 * @throws IOException        error when copying files.
+	 * @throws URISyntaxException something strange happened when trying to access the executed file itself
+	 */
+	private static Path getLangLibrary(final String base) throws IOException, URISyntaxException {
+		final Path compilerPath = Paths.get(JavaCompiler.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+		try {
+			final FileSystem fileSystem = FileSystems.newFileSystem(compilerPath, JavaCompiler.class.getClassLoader());
+			for (final Path rootDirectory : fileSystem.getRootDirectories()) {
+				Compiler.log.trace(rootDirectory);
+				final Iterator<Path> it = Files.walk(rootDirectory).filter(path -> path.toString().startsWith(String.format("/%s", base))).iterator();
+				while (it.hasNext()) {
+					return rootDirectory;
+				}
+			}
+		} catch (final ProviderNotFoundException e) {
+			// Tested with Intellij. This may not work in Eclipse or other IDEs as we suppose the compiled source ist placed to /<projectname>/target/classes/.
+			// Also, if you have a parent dir with /compiler/ it won't work.
+			// However, this is just an in IDE support and doesn't need to be fail safe.
+			Compiler.log.info("Couldn't detect a jar - we suppose this instance is run from within the IDE...");
+			final Path langPath = Path.of(compilerPath.toString().replaceAll("/compiler/", "/lang/"));
+			Compiler.log.error(String.format("try to find lang file in %s", langPath));
+			return langPath;
+		}
+		return compilerPath;
+	}
+
+	/**
+	 * copies all classes from <code>org.alindner.cish.lang</code> to the given source dir.
+	 * <p>
+	 * if this method is called from within the jar file, it will use itself to find the lang package. If it is called from the IDE like Intellij, the files are copied from mavens
+	 * <code>target</code> directory
+	 *
+	 * @throws IOException        error when copying files.
+	 * @throws URISyntaxException something strange happened when trying to access the executed file itself
+	 */
+	private static Path getLangLibrary() throws IOException, URISyntaxException {
+		return Compiler.getLangLibrary(
+				Compiler.class.getPackageName()
+				              .replaceAll("\\.", "/")
+				              .replace("/compiler", "/lang")
+		);
 	}
 
 	/**
@@ -87,9 +145,9 @@ public class Compiler {
 	 */
 	public Compiler loadScriptToMemory() {
 		try {
-			this.content = Files.readString(this.file.toPath());
+			this.content = Files.readString(this.file);
 		} catch (final IOException e) {
-			Compiler.log.error(String.format("Error reading in %s to memory.", this.file.getAbsolutePath()), e);
+			Compiler.log.error(String.format("Error reading in %s to memory.", this.file.toAbsolutePath()), e);
 		}
 		return this;
 	}
@@ -128,13 +186,13 @@ public class Compiler {
 		this.requires.addAll(c.getRequires());
 		this.bash.putAll(c.getBash());
 		this.requires.stream()
-		             .map(File::new)
+		             .map(Path::of)
 		             .forEach(this::compileASubScript);
 
 		return this;
 	}
 
-	private void compileASubScript(final File f) {
+	private void compileASubScript(final Path f) {
 		try {
 			new Compiler(this.debug, this.base, f)
 					.setPackageToHashName()
@@ -147,7 +205,7 @@ public class Compiler {
 	}
 
 	private Compiler setPackageToHashName() {
-		this.pkg = Utils.hash(this.file.getAbsoluteFile().getName());
+		this.pkg = Utils.hash(this.file.toAbsolutePath().getFileName().toString());
 		return this;
 	}
 
@@ -160,30 +218,30 @@ public class Compiler {
 	 *
 	 * @throws IOException when compiling fails
 	 */
-	public Compiler compileJava(final List<Class<?>> imports) throws IOException {
+	public Compiler compileJava(final List<String> imports) throws IOException {
 		this.putJavaContentToFile();
 		this.putBashContentToFile();
-		imports.forEach(aClass -> this.imports.add(aClass.getCanonicalName()));
+		this.imports.addAll(imports);
 		this.prependsImports();
 
-		final ArrayList<File> iterateList = new ArrayList<>();
+		final ArrayList<Path> iterateList = new ArrayList<>();
 		iterateList.add(this.file);
 		iterateList.addAll(
 				this.requires.stream()
-				             .map(File::new)
+				             .map(Path::of)
 				             .collect(Collectors.toList())
 		);
 		iterateList.stream()
-		           .map(f -> new File(Props.root, f.getAbsolutePath()))
+		           .map(f -> Props.root.resolve(f.toAbsolutePath().getFileName().toString()))
 		           .map(Utils::getCompileDirOfShellScript)
 		           .forEach(f -> {
 			           try {
-				           Files.list(f.getParentFile().toPath())
-				                .filter(path -> path.toFile().isDirectory())
-				                .map(path -> new File(path.toFile(), "Main.java"))
+				           Files.list(f.getParent())
+				                .filter(Files::isDirectory)
+				                .map(path -> path.resolve("Main.java"))
 				                .forEach(path -> {
 					                try {
-						                JavaCompiler.compile(path);
+						                JavaCompiler.compile(path, this.getClassPathAsPath());
 					                } catch (final Exception e) {
 						                Compiler.log.error("Couldn't compile file " + path, e);
 					                }
@@ -192,8 +250,6 @@ public class Compiler {
 				           Compiler.log.error(e);
 			           }
 		           });
-
-
 		return this;
 	}
 
@@ -205,33 +261,35 @@ public class Compiler {
 	 * @throws IOException error when downloading, moving and working with urls/uris
 	 */
 	private void prependsImports() throws IOException {
-		final File                    file    = new File(this.base, "Main.java");
+		final Path                    file    = this.base.resolve("main").resolve("Main.java");
 		final AtomicReference<String> content = new AtomicReference<>("");
-		final Map<String, File> l = this.loads
+		final Map<String, Path> l = this.loads
 				.stream()
 				.map(s -> {
 					final URI      fileName = URI.create(s);
 					final String[] tmp      = fileName.getPath().split("/");
-					final File     target   = new File(this.base, tmp[tmp.length - 1]);
+					final Path     target   = this.base.resolve(tmp[tmp.length - 1]);
 
 					if (fileName.getScheme().equals("http") || fileName.getScheme().equals("https")) {
 						try {
-							copyURLToFile(new URL(s), target);
+//							Files.copy(new URL(s), target);
+							Compiler.log.debug("todo");
+							throw new IOException();
 						} catch (final IOException e) {
 							Compiler.log.error("Failed creating and downloading a url form string", e);
 						}
 					} else {
-						final File origFile = FileUtils.fileFromUri(fileName);
+						final Path origFile = Path.of(fileName);
 						try {
-							copyFile(origFile, target);
+							Files.copy(origFile, target);
 						} catch (final IOException e) {
 							Compiler.log.error("Failed copying the file to the cached target dir", e);
 						}
 					}
-					if (target.exists()) {
+					if (Files.exists(target)) {
 						return Map.ofEntries(Map.entry(s, target));
 					} else {
-						return new HashMap<String, File>();
+						return new HashMap<String, Path>();
 					}
 				})
 				.flatMap(stringFileMap -> stringFileMap.entrySet().stream())
@@ -241,7 +299,7 @@ public class Compiler {
 		            .map(s -> {
 			            final List<String> list;
 			            if (s.startsWith("*.")) {
-				            final File f = l.get(s.substring(2));
+				            final Path f = l.get(s.substring(2));
 				            list = Compiler.fileToClass(f);
 			            } else {
 				            list = List.of(s);
@@ -251,8 +309,8 @@ public class Compiler {
 		            .filter(Objects::nonNull)
 		            .flatMap(Collection::stream)
 		            .forEach(s -> content.set(String.format("%s\n import %s;", content.get(), s)));
-		content.set(content.get() + "\n" + Files.readString(file.toPath()));
-		Files.write(file.toPath(), content.get().getBytes());
+		content.set(content.get() + "\n" + Files.readString(file));
+		Files.write(file, content.get().getBytes());
 	}
 
 	/**
@@ -262,12 +320,11 @@ public class Compiler {
 	 */
 	private void putJavaContentToFile() throws IOException {
 		for (final Map.Entry<String, String> entry : this.javaContent.entrySet()) {
-			if (this.base.isDirectory()) {
-				this.base.delete();
-				this.base.mkdirs();
+			if (Files.notExists(this.base.resolve("main"))) {
+				Files.createDirectories(this.base.resolve("main"));
 			}
-			final File currentFile = new File(this.base, entry.getKey() + ".java");
-			Files.write(currentFile.toPath(), entry.getValue().getBytes(StandardCharsets.UTF_8));
+			final Path currentFile = this.base.resolve("main").resolve(entry.getKey() + ".java");
+			Files.write(currentFile, entry.getValue().getBytes(StandardCharsets.UTF_8));
 		}
 	}
 
@@ -278,12 +335,48 @@ public class Compiler {
 	 */
 	private void putBashContentToFile() throws IOException {
 		for (final Map.Entry<String, String> entry : this.bash.entrySet()) {
-			if (this.base.isDirectory()) {
-				this.base.delete();
-				this.base.mkdirs();
+			if (Files.isDirectory(this.base)) {
+				Files.deleteIfExists(this.base);
+				Files.createDirectory(this.base);
 			}
-			final File currentFile = new File(this.base, entry.getKey() + ".sh");
-			Files.write(currentFile.toPath(), ("#!/bin/bash \n" + entry.getValue()).getBytes(StandardCharsets.UTF_8));
+			final Path currentFile = this.base.resolve(entry.getKey() + ".sh");
+			Files.write(currentFile, ("#!/bin/bash \n" + entry.getValue()).getBytes(StandardCharsets.UTF_8));
 		}
+	}
+
+	public Compiler compileToByteCode() throws ParseException, IOException {
+		this.loadScriptToMemory();
+		this.compileCish();
+		Compiler.directories.forEach(this.manager::scanForExtensions);
+		this.manager.processFoundExtensions();
+		this.compileJava(this.manager.getImports());
+		return this;
+	}
+
+	public List<Path> getClassPathAsPath() {
+		final List<Path> moduleList = this.manager.getModulesList();
+		moduleList.add(Utils.getCompileDirOfShellScript(this.file).resolve("out"));
+		try {
+			moduleList.add(Compiler.getLangLibrary());
+		} catch (final IOException | URISyntaxException e) {
+			e.printStackTrace();
+		}
+		return moduleList;
+	}
+
+	public URLClassLoader getClassPath() {
+		return URLClassLoader.newInstance(
+				this.getClassPathAsPath().stream()
+				    .map(path -> {
+					    try {
+						    return path.toUri().toURL();
+					    } catch (final MalformedURLException e) {
+						    e.printStackTrace();
+						    return null;
+					    }
+				    })
+				    .filter(Objects::nonNull)
+				    .toArray(URL[]::new)
+		);
 	}
 }

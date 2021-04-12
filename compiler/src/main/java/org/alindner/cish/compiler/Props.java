@@ -1,6 +1,6 @@
 package org.alindner.cish.compiler;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.regex.Pattern;
 
 /**
@@ -20,5 +20,5 @@ public class Props {
 	/**
 	 * Roots cache dir
 	 */
-	static final        File    root              = new File("./.cish/cache/compiled").toPath().toAbsolutePath().toFile();
+	public static final Path    root              = Path.of("./.cish/cache/compiled").toAbsolutePath();
 }

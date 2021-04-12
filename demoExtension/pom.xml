@@ -2,7 +2,6 @@
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.alindner.cish</groupId>
     <artifactId>demoExtension</artifactId>
@@ -10,15 +9,21 @@
     <dependencies>
         <dependency>
             <groupId>org.alindner.cish</groupId>
-            <artifactId>extension</artifactId>
+            <artifactId>lang</artifactId>
             <version>0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>org.alindner.cish</groupId>
-            <artifactId>lang</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.8.6</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.alindner.cish</groupId>
+            <artifactId>extension</artifactId>
+            <version>v0.3.6-STABLE-e2332b0a4f5a547d2eb869326f84bd5fba681016</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
     <properties>

@@ -22,6 +22,15 @@ public class Console {
 	}
 
 	/**
+	 * print a string
+	 *
+	 * @param value value
+	 */
+	public static void print(final Integer value) {
+		Console.print(Type.OUTPUT, String.valueOf(value));
+	}
+
+	/**
 	 * print a list
 	 *
 	 * @param value value

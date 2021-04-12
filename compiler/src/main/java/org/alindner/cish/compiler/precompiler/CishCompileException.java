@@ -1,4 +1,4 @@
-package org.alindner.cish.compiler;
+package org.alindner.cish.compiler.precompiler;
 
 public class CishCompileException extends Exception {
 

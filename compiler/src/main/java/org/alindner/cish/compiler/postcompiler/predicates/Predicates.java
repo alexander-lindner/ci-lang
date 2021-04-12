@@ -1,4 +1,4 @@
-package org.alindner.cish.lang.functions.predicate;
+package org.alindner.cish.compiler.postcompiler.predicates;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,14 +12,14 @@ public class Predicates {
 	/**
 	 * all predicate which are used from the {@see Is} class.
 	 */
-	static Map<CishPredicate, Map<Class<?>, Supplier<Predicate<?>>>> predicates = new HashMap<>();
+	static Map<String, Map<Class<?>, Supplier<Predicate<?>>>> predicates = new HashMap<>();
 
 	/**
 	 * add a predicate to the current active list
 	 *
 	 * @param cishPredicate predicate
 	 */
-	public static void addPredicate(final CishPredicate cishPredicate) {
-		Predicates.predicates.put(cishPredicate, cishPredicate.getMapping());
+	public static void addPredicate(final String cishPredicate, final Map<Class<?>, Supplier<Predicate<?>>> mapping) {
+		Predicates.predicates.put(cishPredicate, mapping);
 	}
 }
