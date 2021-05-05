@@ -151,8 +151,12 @@ public class Compiler {
 
 	/**
 	 * execute the compiled cish script
+	 *
+	 * @param simpleParameters
+	 * @param argsList
+	 * @param parameters
 	 */
-	public void run() {
-		this.postCompiler.run();
+	public void run(final List<String> simpleParameters, final List<String> argsList, final Map<String, String> parameters) {
+		this.postCompiler.run(simpleParameters, argsList, parameters);
 	}
 }

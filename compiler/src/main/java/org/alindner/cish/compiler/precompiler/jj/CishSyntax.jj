@@ -132,7 +132,7 @@ String Root() :
 	[<EOF>]
 	{
         if(this.renderClass) {
-            return "import org.alindner.cish.lang.*; import org.alindner.cish.lang.functions.predicate.*;   public class Main { public static void main(String... args) throws Exception { "+mainContent.toString()+"}}";
+            return "import java.util.*;import java.nio.file.*; import org.alindner.cish.lang.*; import org.alindner.cish.lang.functions.predicate.*;   public class Main { public static void main(final Path file, final List<String> simpleParameters, final List<String> argsList, final Map<String, String> parameters) throws Exception { Parameter.params = simpleParameters; Parameter.simpleArgs = argsList; Parameter.extendedParams = parameters; Parameter.script = file;"+mainContent.toString()+"}}";
         } else {
         	return mainContent.toString();
         }

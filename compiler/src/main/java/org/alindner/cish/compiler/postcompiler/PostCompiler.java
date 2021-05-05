@@ -54,6 +54,7 @@ public class PostCompiler {
 	private final Map<String, String> bash          = new TreeMap<>();
 	private final Path                cishScript;
 	private final ModuleManager       moduleManager;
+	private       Path                cishFile;
 
 	public PostCompiler(final Path base, final Path cishScript, final ExtensionManager manager) {
 		this.base = base;
@@ -102,6 +103,7 @@ public class PostCompiler {
 	 * @throws URISyntaxException   something strange happened when trying to access the executed file itself
 	 */
 	public void compile(final Path cishFile, final List<Path> moduleList) throws IOException, URISyntaxException, CishCompileException {
+		this.cishFile = cishFile;
 		this.listOfModules.addAll(moduleList);
 
 		final javax.tools.JavaCompiler            compiler    = ToolProvider.getSystemJavaCompiler();
@@ -143,8 +145,12 @@ public class PostCompiler {
 
 	/**
 	 * execute the compiled java code
+	 *
+	 * @param simpleParameters
+	 * @param argsList
+	 * @param parameters
 	 */
-	public void run() {
+	public void run(final List<String> simpleParameters, final List<String> argsList, final Map<String, String> parameters) {
 		final ModuleFinder pluginsFinder = ModuleFinder.of(this.moduleManager.getModulePaths().toArray(new Path[0]));
 
 		final List<String> moduleNames = pluginsFinder
@@ -163,10 +169,9 @@ public class PostCompiler {
 				.defineModulesWithOneLoader(pluginsConfiguration, this.getClass().getClassLoader());
 
 		try {
-			final Class<?> cls    = Class.forName("main.Main", true, layer.findLoader("cishResult"));
-			final Method   meth   = cls.getMethod("main", String[].class);
-			final String[] params = null;
-			meth.invoke(null, (Object) params);
+			final Class<?> cls  = Class.forName("main.Main", true, layer.findLoader("cishResult"));
+			final Method   meth = cls.getMethod("main", Path.class, List.class, List.class, Map.class);
+			meth.invoke(null, this.cishFile, simpleParameters, argsList, parameters);
 		} catch (final ClassNotFoundException e) {
 			PostCompiler.log.fatal("Couldn't found the main class. This may be a bug.", e);
 		} catch (final NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {

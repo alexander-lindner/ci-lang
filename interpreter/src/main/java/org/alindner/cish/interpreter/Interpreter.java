@@ -9,7 +9,6 @@ import net.sourceforge.argparse4j.inf.Namespace;
 import org.alindner.cish.compiler.Compiler;
 import org.alindner.cish.compiler.exceptions.CishException;
 import org.alindner.cish.compiler.precompiler.jj.ParseException;
-import org.alindner.cish.lang.Parameter;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.config.Configurator;
 
@@ -74,8 +73,8 @@ public class Interpreter {
 	/**
 	 * start the interpreter
 	 *
-	 * @param args all arguments, differentiate as args, (simple) parameter and extended parameter. More Information: {@link Interpreter#parseScriptParameters(List)}, {@link
-	 *             Parameter}. First arg must be the script file
+	 * @param args all arguments, differentiate as args, (simple) parameter and extended parameter. More Information: {@link Interpreter#parseScriptParameters(List)}. First arg
+	 *             must be the script file
 	 *
 	 * @throws IOException    errors during script reading
 	 * @throws ParseException errors during script parsing
@@ -94,7 +93,7 @@ public class Interpreter {
 			final Path f = Path.of(fileName);
 			this.compiler = new Compiler(this.debug, f);
 			this.compiler.compile();
-			this.compiler.run();
+			this.compiler.run(this.simpleParameters, this.argsList, this.parameters);
 		}
 	}
 
@@ -123,13 +122,6 @@ public class Interpreter {
 			final ArrayList<String> list = new ArrayList<>();
 			this.args = parser.parseKnownArgs(args, list);
 			this.parseScriptParameters(list);
-			/*
-			@todo move the parameter to method invoke
-			 */
-			Parameter.params = this.simpleParameters;
-			Parameter.simpleArgs = this.argsList;
-			Parameter.extendedParams = this.parameters;
-			Parameter.script = Path.of(this.args.<String>getList("file").get(0));
 		} catch (final ArgumentParserException e) {
 			parser.handleError(e);
 			System.exit(1);
@@ -137,11 +129,9 @@ public class Interpreter {
 	}
 
 	/**
-	 * parses the leftover script arguments to args, (simple) parameter and extended parameter. More Information: {@link Parameter}.
+	 * parses the leftover script arguments to args, (simple) parameter and extended parameter.
 	 *
 	 * @param args arguments
-	 *
-	 * @see Parameter
 	 */
 	void parseScriptParameters(final List<String> args) {
 		if (args.size() < 1) {

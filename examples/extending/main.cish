@@ -1,0 +1,8 @@
+#!/media/alindner/DATA/40_Privat/GitHub/alexander-lindner/cish/target/cish
+
+
+#load("Github.java")
+
+stars = Github::getStars("lsds/sgx-lkl")
+Console::print(stars)
+
