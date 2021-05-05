@@ -3,4 +3,10 @@ module org.alindner.cish.interpretert {
 	requires org.junit.jupiter.api;
 	requires org.hamcrest;
 	requires org.alindner.cish.interpreter;
+
+    requires org.apache.logging.log4j;
+    requires org.apache.logging.log4j.core;
+    requires static lombok;
+    requires transitive org.alindner.cish.compiler;
+    requires net.sourceforge.argparse4j;
 }

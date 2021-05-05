@@ -35,7 +35,7 @@ jobs:
           export VERSIONING_GIT_BRANCH=${GITHUB_REF#refs/};
           VERSIONING_GIT_BRANCH=${VERSIONING_GIT_BRANCH%/merge};
           fi
-          ./mvnw clean package javadoc:javadoc
+          ./mvnw -DskipTests clean package javadoc:javadoc
 
       - name: Deploy doc "compiler"
         uses: JamesIves/github-pages-deploy-action@4.1.1
