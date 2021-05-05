@@ -26,5 +26,10 @@
       <option name="name" value="oss-sonatype" />
       <option name="url" value="https://oss.sonatype.org/content/repositories/snapshots/" />
     </remote-repository>
+    <remote-repository>
+      <option name="id" value="central" />
+      <option name="name" value="Central Repository" />
+      <option name="url" value="https://maven.vanta.io/artifactory/libs-release" />
+    </remote-repository>
   </component>
 </project>

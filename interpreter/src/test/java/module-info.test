@@ -1,0 +1,6 @@
+module org.alindner.cish.interpretert {
+
+	requires org.junit.jupiter.api;
+	requires org.hamcrest;
+	requires org.alindner.cish.interpreter;
+}

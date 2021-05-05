@@ -1,8 +1,8 @@
 package org.alindner.cish.lang;
 
 import lombok.Data;
-import org.apache.commons.lang.builder.ToStringBuilder;
 
+import java.util.StringJoiner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -113,9 +113,10 @@ public class Regex {
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this)
-				.append("regex", this.regex)
-				.append("regexString", this.regexString)
+		return new StringJoiner(", ", Regex.class.getSimpleName() + "[", "]")
+				.add("regex=" + this.regex)
+				.add("regexString='" + this.regexString + "'")
 				.toString();
+
 	}
 }

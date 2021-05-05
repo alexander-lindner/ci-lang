@@ -2,8 +2,8 @@ package org.alindner.cish.lang.internal;
 
 import org.alindner.cish.lang.CiFile;
 
-import javax.xml.bind.DatatypeConverter;
 import java.io.File;
+import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -46,6 +46,6 @@ public class Utils {
 			}
 		}
 		md.update(str.getBytes());
-		return DatatypeConverter.printHexBinary(md.digest());
+		return String.format("%032X", new BigInteger(1, md.digest()));
 	}
 }

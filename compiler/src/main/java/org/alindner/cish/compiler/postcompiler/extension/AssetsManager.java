@@ -3,8 +3,7 @@ package org.alindner.cish.compiler.postcompiler.extension;
 import lombok.extern.log4j.Log4j2;
 import org.alindner.cish.compiler.utils.Utils;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
@@ -13,25 +12,36 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 
 @Log4j2
-public class AssetsManager {
-	final         Path                   homeDir                = Path.of(System.getProperty("user.home"));
-	final         Path                   basePathOfCishTmpDir   = this.homeDir.resolve(".cish/tmp");
-	private final Map<Asset, List<Path>> buildDirManagementList = new HashMap<>();
-	CopyOnWriteArrayList<Asset> database = new CopyOnWriteArrayList<>();
-	{
-		if (!Files.isDirectory((this.basePathOfCishTmpDir)) && !Files.exists((this.basePathOfCishTmpDir))) {
+public class AssetsManager implements Serializable {
+	final static         Path homeDir              = Path.of(System.getProperty("user.home"));
+	final static         Path basePathOfCishTmpDir = AssetsManager.homeDir.resolve(".cish/tmp");
+	final static         Path cacheDir             = AssetsManager.homeDir.resolve(".cish/cache");
+	private static final long serialVersionUID     = 7691572604648016027L;
+	static {
+		if (!Files.isDirectory(AssetsManager.basePathOfCishTmpDir) && !Files.exists(AssetsManager.basePathOfCishTmpDir)) {
 			try {
-				Files.createDirectories(this.basePathOfCishTmpDir);
+				Files.createDirectories(AssetsManager.basePathOfCishTmpDir);
 			} catch (final IOException e) {
 				throw new Error("Unable to create the working directory inside the home directory");
 			}
 		}
+
+		if (!Files.isDirectory(AssetsManager.cacheDir) && !Files.exists(AssetsManager.cacheDir)) {
+			try {
+				Files.createDirectories(AssetsManager.cacheDir);
+			} catch (final IOException e) {
+				throw new Error("Unable to create the cache directory inside the home directory");
+			}
+		}
+	}
+	CopyOnWriteArrayList<Asset> database = new CopyOnWriteArrayList<>();
+	private transient Path file;
+
+	public AssetsManager(final Path file) {
+		this.file = file;
 	}
 
 	private static String bytesToHex(final byte[] hash) {
@@ -58,58 +68,25 @@ public class AssetsManager {
 		return AssetsManager.bytesToHex(hashBytes);
 	}
 
-	private static Path extract(final Asset asset) throws IOException {
-		final Path target = asset.getPath().getParent().resolve(asset.getPath().getFileName() + "_dir");
-		try (final JarFile jar = new JarFile(asset.getPath().toFile())) {
-			final Enumeration<JarEntry> enumEntries = jar.entries();
-
-			while (enumEntries.hasMoreElements()) {
-				final JarEntry file = enumEntries.nextElement();
-				final Path     f    = target.resolve(file.getName());
-
-				if (file.isDirectory()) { // if its a directory, create it
-					Files.createDirectories(f);
-					continue;
-				}
-				try (final java.io.InputStream is = jar.getInputStream(file); final FileOutputStream fos = new FileOutputStream(f.toFile())) {
-					while (is.available() > 0) {  // write contents of 'is' to 'fos'
-						fos.write(is.read());
-					}
-				}
+	public static AssetsManager load(final Path file) {
+		final Path storePath = AssetsManager.cacheDir.resolve(Utils.hash(file.toAbsolutePath().toString()));
+		if (Files.exists(storePath)) {
+			try (final ObjectInputStream ois = new ObjectInputStream(new FileInputStream(storePath.toAbsolutePath().toString()))) {
+				AssetsManager.log.info("Loading cached AssetsManger");
+				return (AssetsManager) ois.readObject();
+			} catch (final IOException | ClassNotFoundException | ClassCastException e) {
+				AssetsManager.log.error("Could not load the AssetsManager from cache directory. Skipping. This reduces the performance");
+				AssetsManager.log.error(e);
 			}
 		}
-		return target;
+		return new AssetsManager(file);
 	}
 
-	public void copyToBuildDir(final Asset file, final Path cishFile) throws IOException {
-		if (this.buildDirManagementList.containsKey(file)) {
-			if (this.buildDirManagementList.get(file).contains(cishFile)) {
-				return;
-			}
-			final List<Path> list = this.buildDirManagementList.get(file);
-			list.add(cishFile);
-		} else {
-			this.buildDirManagementList.put(file, new ArrayList<>(List.of(cishFile)));
-		}
-		final Path buildDir = Utils.getCompileDirOfShellScript(cishFile);
-		Files.copy(file.getPath(), buildDir.resolve(file.getPath().getFileName() + ".jar"));
-	}
-
-	public Asset getByUrl(final URL u) throws IOException {
-		if (this.database.stream().anyMatch(asset -> asset.getUrl().equals(u))) {
-			return this.database.stream().filter(asset -> asset.getUrl().equals(u)).findFirst().orElseThrow(Error::new);
-		} else {
-			final Asset asset = this.download(u);
-			this.database.add(asset);
-			return asset;
-		}
-	}
-
-	public Asset download(final URL url) throws IOException {
+	public static Asset download(final URL url) throws IOException {
 		try {
 			final ReadableByteChannel rbc    = Channels.newChannel(url.openStream());
 			final String              hash   = AssetsManager.hash(Path.of(url.getFile()).getFileName().toString());
-			final Path                target = this.basePathOfCishTmpDir.resolve(hash);
+			final Path                target = AssetsManager.basePathOfCishTmpDir.resolve(hash + ".jar");
 			final FileOutputStream    fos;
 			fos = new FileOutputStream(target.toAbsolutePath().toString());
 			fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
@@ -119,5 +96,36 @@ public class AssetsManager {
 			throw new IOException(String.format("Couldn't download extension %s", url), e);
 		}
 	}
-}
 
+	public void store() {
+		final Path storePath = AssetsManager.cacheDir.resolve(Utils.hash(this.file.toAbsolutePath().toString()));
+		try (final ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(storePath.toAbsolutePath().toString()))) {
+			oos.writeObject(this);
+		} catch (final IOException e) {
+			AssetsManager.log.error("Could not store the AssetsManager to cache directory. Skipping. This reduces the performance");
+			AssetsManager.log.error(e);
+		}
+	}
+
+
+	public Asset getByUrl(final URL u) throws IOException {
+		if (this.database.stream().anyMatch(asset -> asset.getUrl().equals(u))) {
+			return this.database.stream().filter(asset -> asset.getUrl().equals(u)).findFirst().orElseThrow(Error::new);
+		} else {
+			final Asset asset = AssetsManager.download(u);
+			this.database.add(asset);
+			return asset;
+		}
+	}
+
+
+	private void writeObject(final ObjectOutputStream oos) throws IOException {
+		oos.defaultWriteObject();
+		oos.writeUTF(this.file.toAbsolutePath().toString());
+	}
+
+	private void readObject(final ObjectInputStream ois) throws IOException, ClassNotFoundException {
+		ois.defaultReadObject();
+		this.file = Path.of(ois.readUTF());
+	}
+}

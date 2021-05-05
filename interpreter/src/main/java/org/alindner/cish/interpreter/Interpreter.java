@@ -7,19 +7,14 @@ import net.sourceforge.argparse4j.inf.ArgumentParser;
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.alindner.cish.compiler.Compiler;
+import org.alindner.cish.compiler.exceptions.CishException;
 import org.alindner.cish.compiler.precompiler.jj.ParseException;
-import org.alindner.cish.compiler.utils.Utils;
 import org.alindner.cish.lang.Parameter;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.config.Configurator;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.net.MalformedURLException;
-import java.net.URLClassLoader;
 import java.nio.file.Path;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -74,7 +69,6 @@ public class Interpreter {
 				this.debug = false;
 				break;
 		}
-		this.loadFiles();
 	}
 
 	/**
@@ -86,48 +80,21 @@ public class Interpreter {
 	 * @throws IOException    errors during script reading
 	 * @throws ParseException errors during script parsing
 	 */
-	public static void main(final String[] args) throws IOException, ParseException {
-		new Interpreter(args);
+	public static void main(final String[] args) throws IOException, ParseException, CishException {
+		new Interpreter(args).loadFiles();
 	}
-
-	/**
-	 * invokes the compiled script in its cache directory
-	 *
-	 * @param root the script file
-	 *
-	 * @throws ClassNotFoundException    couldn't find class
-	 * @throws IllegalAccessException    error when invoking script
-	 * @throws MalformedURLException     error when invoking script
-	 * @throws NoSuchMethodException     couldn't find main method
-	 * @throws InvocationTargetException error when invoking script
-	 * @throws NoSuchAlgorithmException  error when invoking script
-	 */
-	public void load(final Path root) throws ClassNotFoundException, IllegalAccessException, MalformedURLException, NoSuchMethodException, InvocationTargetException, NoSuchAlgorithmException {
-		Interpreter.log.debug("Creating new classPath of this directory: {} ", () -> Utils.getCompileDirOfShellScript(root).toUri());
-		final URLClassLoader classLoader = this.compiler.getClassPath();
-		final Class<?>       cls         = Class.forName("Main", true, classLoader);
-		final Method         meth        = cls.getMethod("main", String[].class);
-		final String[]       params      = null;
-		meth.invoke(null, (Object) params);
-	}
-
 
 	/**
 	 * loads, compiles and executes the given cish scrips
 	 *
-	 * @throws IOException    couldn't load files
-	 * @throws ParseException couldn't compile the file
+	 * @throws CishException TODO
 	 */
-	private void loadFiles() throws IOException, ParseException {
+	private void loadFiles() throws CishException {
 		for (final String fileName : this.args.<String>getList("file")) {
 			final Path f = Path.of(fileName);
-
-			this.compiler = new Compiler(this.debug, f).compileToByteCode();
-			try {
-				this.load(f);
-			} catch (final ClassNotFoundException | IllegalAccessException | MalformedURLException | NoSuchMethodException | InvocationTargetException | NoSuchAlgorithmException e) {
-				Interpreter.log.fatal("Error during loading file " + f, e);
-			}
+			this.compiler = new Compiler(this.debug, f);
+			this.compiler.compile();
+			this.compiler.run();
 		}
 	}
 
@@ -156,6 +123,9 @@ public class Interpreter {
 			final ArrayList<String> list = new ArrayList<>();
 			this.args = parser.parseKnownArgs(args, list);
 			this.parseScriptParameters(list);
+			/*
+			@todo move the parameter to method invoke
+			 */
 			Parameter.params = this.simpleParameters;
 			Parameter.simpleArgs = this.argsList;
 			Parameter.extendedParams = this.parameters;

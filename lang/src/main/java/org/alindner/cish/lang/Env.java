@@ -1,7 +1,6 @@
 package org.alindner.cish.lang;
 
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang.SystemUtils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -108,39 +107,39 @@ public class Env {
 
 			final Map<K, V> env = (Map<K, V>) theEnvironmentField.get(null);
 
-			if (SystemUtils.IS_OS_WINDOWS) {
-				// This is all that is needed on windows running java jdk 1.8.0_92
-				if (value == null) {
-					env.remove(key);
-				} else {
-					env.put((K) key, (V) value);
-				}
+//			if (SystemUtils.IS_OS_WINDOWS) {
+//				// This is all that is needed on windows running java jdk 1.8.0_92
+//				if (value == null) {
+//					env.remove(key);
+//				} else {
+//					env.put((K) key, (V) value);
+//				}
+//			} else {
+			// This is triggered to work on openjdk 1.8.0_91
+			// The ProcessEnvironment$Variable is the key of the map
+			final Class<K> variableClass                   = (Class<K>) Class.forName("java.lang.ProcessEnvironment$Variable");
+			final Method   convertToVariable               = variableClass.getMethod("valueOf", String.class);
+			final boolean  conversionVariableAccessibility = convertToVariable.isAccessible();
+			convertToVariable.setAccessible(true);
+
+			// The ProcessEnvironment$Value is the value fo the map
+			final Class<V> valueClass                   = (Class<V>) Class.forName("java.lang.ProcessEnvironment$Value");
+			final Method   convertToValue               = valueClass.getMethod("valueOf", String.class);
+			final boolean  conversionValueAccessibility = convertToValue.isAccessible();
+			convertToValue.setAccessible(true);
+
+			if (value == null) {
+				env.remove(convertToVariable.invoke(null, key));
 			} else {
-				// This is triggered to work on openjdk 1.8.0_91
-				// The ProcessEnvironment$Variable is the key of the map
-				final Class<K> variableClass                   = (Class<K>) Class.forName("java.lang.ProcessEnvironment$Variable");
-				final Method   convertToVariable               = variableClass.getMethod("valueOf", String.class);
-				final boolean  conversionVariableAccessibility = convertToVariable.isAccessible();
-				convertToVariable.setAccessible(true);
+				// we place the new value inside the map after conversion so as to
+				// avoid class cast exceptions when rerunning this code
+				env.put((K) convertToVariable.invoke(null, key), (V) convertToValue.invoke(null, value));
 
-				// The ProcessEnvironment$Value is the value fo the map
-				final Class<V> valueClass                   = (Class<V>) Class.forName("java.lang.ProcessEnvironment$Value");
-				final Method   convertToValue               = valueClass.getMethod("valueOf", String.class);
-				final boolean  conversionValueAccessibility = convertToValue.isAccessible();
-				convertToValue.setAccessible(true);
-
-				if (value == null) {
-					env.remove(convertToVariable.invoke(null, key));
-				} else {
-					// we place the new value inside the map after conversion so as to
-					// avoid class cast exceptions when rerunning this code
-					env.put((K) convertToVariable.invoke(null, key), (V) convertToValue.invoke(null, value));
-
-					// reset accessibility to what they were
-					convertToValue.setAccessible(conversionValueAccessibility);
-					convertToVariable.setAccessible(conversionVariableAccessibility);
-				}
+				// reset accessibility to what they were
+				convertToValue.setAccessible(conversionValueAccessibility);
+				convertToVariable.setAccessible(conversionVariableAccessibility);
 			}
+//			}
 			// reset environment accessibility
 			theEnvironmentField.setAccessible(environmentAccessibility);
 

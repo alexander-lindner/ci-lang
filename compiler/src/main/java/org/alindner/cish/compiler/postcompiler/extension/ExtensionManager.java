@@ -8,6 +8,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 @Log4j2
@@ -15,7 +19,11 @@ public class ExtensionManager {
 	private final Deque<FileInfo>       queue                     = new ArrayDeque<>();
 	private final Map<FileInfo, String> listOfGlobalLoadedClasses = new HashMap<>();
 	private final Deque<FileInfo>       loaded                    = new ArrayDeque<>();
-	private final AssetsManager         assetsManager             = new AssetsManager();
+	private final AssetsManager         assetsManager;
+
+	public ExtensionManager(final Path file) {
+		this.assetsManager = AssetsManager.load(file);
+	}
 
 	public void scanForExtensions(final Path extensionsDir) {
 		if (Files.notExists(extensionsDir) && !Files.isDirectory(extensionsDir)) {
@@ -23,35 +31,28 @@ public class ExtensionManager {
 			return;
 		}
 		try {
+			final ExecutorService                es = Executors.newFixedThreadPool(10);
+			final List<Future<DependencyWorker>> q2 = new ArrayList<>();
 			Files.walk(extensionsDir).filter(path -> path.getFileName().toString().endsWith(".jar")).forEach(file -> { //todo add java, class
 				ExtensionManager.log.debug("added a new DependencyWorker for file {}", () -> file);
-				this.queue.addAll(new DependencyWorker(file).getQueue());
+				q2.add(es.submit(new DependencyWorker(file)));
 			});
+			q2.forEach(e -> {
+				try {
+					this.queue.addAll(e.get().getQueue());
+				} catch (final InterruptedException | ExecutionException interruptedException) {
+					ExtensionManager.log.error("Couldn't load extension {}. Thread was interrupted.", () -> interruptedException);
+					ExtensionManager.log.error(e);
+				} finally {
+					es.shutdown();
+				}
+			});
+
 		} catch (final IOException e) {
 			ExtensionManager.log.error("Couldn't read in jar file", e);
 		}
 	}
 
-	public void moveExtensionsAndDependencyToBuildDir(final Path target) {
-		this.loaded.forEach(fileInfo -> {
-			try {
-				final Asset mainAsset = this.assetsManager.getByUrl(fileInfo.getFile().toUri().toURL());
-				this.assetsManager.copyToBuildDir(mainAsset, target);
-
-				fileInfo.getDependencies().forEach(dependenciesMetaInfo -> {
-					try {
-						final Asset depAsset = this.assetsManager.getByUrl(dependenciesMetaInfo.getUrl());
-						this.assetsManager.copyToBuildDir(depAsset, target);
-					} catch (final IOException e) {
-						ExtensionManager.log.error("couldn't copy extensions dependency to build dir", e);
-					}
-				});
-			} catch (final IOException e) {
-				ExtensionManager.log.error("couldn't copy extension to build dir", e);
-			}
-		});
-
-	}
 
 	public void processFoundExtensions() {
 		this.queue.forEach(this::processFoundExtensions);
@@ -134,6 +135,10 @@ public class ExtensionManager {
 		                                      .collect(Collectors.toList());
 		this.loaded.forEach(fileInfo -> depList.add(fileInfo.getFile()));
 		return depList.stream().distinct().collect(Collectors.toList());
+	}
+
+	public void store() {
+		this.assetsManager.store();
 	}
 }
 

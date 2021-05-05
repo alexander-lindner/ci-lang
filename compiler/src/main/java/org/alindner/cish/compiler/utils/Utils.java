@@ -3,9 +3,9 @@ package org.alindner.cish.compiler.utils;
 import lombok.extern.log4j.Log4j2;
 import org.alindner.cish.compiler.Props;
 
-import javax.xml.bind.DatatypeConverter;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -47,7 +47,8 @@ public class Utils {
 			}
 		}
 		md.update(str.getBytes());
-		return DatatypeConverter.printHexBinary(md.digest());
+
+		return String.format("%032X", new BigInteger(1, md.digest()));
 	}
 
 	/**

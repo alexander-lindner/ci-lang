@@ -19,15 +19,16 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Log4j2
-public class DependencyWorker {
-	private final Deque<FileInfo> queue   = new ArrayDeque<>();
-	private final Path            file;
-	private final List<String>    objList = Arrays.stream(Object.class.getMethods()).map(Method::getName).distinct().collect(Collectors.toList());
+public class DependencyWorker implements Callable<DependencyWorker> {
+	private final static List<String>    objList = Arrays.stream(Object.class.getMethods()).map(Method::getName).distinct().collect(Collectors.toList());
+	private final        Deque<FileInfo> queue   = new ArrayDeque<>();
+	private final        Path            file;
 
 	public DependencyWorker(final Path file) {
 		this.file = file;
@@ -117,7 +118,10 @@ public class DependencyWorker {
 	}
 
 	public Deque<FileInfo> getQueue() {
+		return this.queue;
+	}
 
+	private void buildQueue() {
 		try {
 			DependencyWorker.log.debug("Search for the extension in {}", this.file::toAbsolutePath);
 
@@ -190,7 +194,7 @@ public class DependencyWorker {
 						                .name(name)
 						                .provides(providedClasses.stream().distinct().collect(Collectors.toList()))
 						                .dependencies(dependencies.stream().distinct().collect(Collectors.toList()))
-						                .methods(methods.stream().distinct().filter(s -> !this.objList.contains(s)).collect(Collectors.toList()))
+						                .methods(methods.stream().distinct().filter(s -> !DependencyWorker.objList.contains(s)).collect(Collectors.toList()))
 						                .build()
 				);
 				DependencyWorker.log.debug("Adding final file to queue: {}", () -> entry);
@@ -235,6 +239,12 @@ public class DependencyWorker {
 			DependencyWorker.log.error("Couldn't read in extension. The provided file {} doesn't behave as expected.", () -> this.file);
 			DependencyWorker.log.error("Exception is: ", e);
 		}
-		return this.queue;
+	}
+
+
+	@Override
+	public DependencyWorker call() throws Exception {
+		this.buildQueue();
+		return this;
 	}
 }

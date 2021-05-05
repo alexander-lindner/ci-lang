@@ -10,62 +10,59 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>lang</artifactId>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>9</source>
-                    <target>9</target>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
     <dependencies>
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>${lombok.version}</version>
-            <scope>provided</scope>
+            <groupId>com.guicedee.services</groupId>
+            <artifactId>javax.inject</artifactId>
+            <version>1.1.1.7</version>
         </dependency>
         <dependency>
             <groupId>org.apache.maven.shared</groupId>
             <artifactId>maven-invoker</artifactId>
-            <version>3.0.1</version>
+            <version>3.1.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>javax.inject</groupId>
+                    <artifactId>javax.inject</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
-        <dependency>
-            <groupId>com.github.docker-java</groupId>
-            <artifactId>docker-java</artifactId>
-            <!-- use latest version https://github.com/docker-java/docker-java/releases -->
-            <version>3.2.1</version>
-        </dependency>
-        <dependency>
-            <groupId>com.github.inamik.text.tables</groupId>
-            <artifactId>inamik-text-tables</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
+        <!--        <dependency>-->
+        <!--            <groupId>com.github.docker-java</groupId>-->
+        <!--            <artifactId>docker-java</artifactId>-->
+        <!--            <version>3.2.8</version>-->
+        <!--        </dependency>-->
+        <!--        &lt;!&ndash; https://mvnrepository.com/artifact/com.github.docker-java/docker-java-transport-okhttp &ndash;&gt;-->
+        <!--        <dependency>-->
+        <!--            <groupId>com.github.docker-java</groupId>-->
+        <!--            <artifactId>docker-java-transport-zerodep</artifactId>-->
+        <!--            <version>3.2.8</version>-->
+        <!--        </dependency>-->
+
+        <!--        <dependency>-->
+        <!--            <groupId>com.github.inamik.text.tables</groupId>-->
+        <!--            <artifactId>inamik-text-tables</artifactId>-->
+        <!--            <version>1.0-SNAPSHOT</version>-->
+        <!--        </dependency>-->
         <dependency>
             <groupId>org.alindner.cish</groupId>
             <artifactId>extension</artifactId>
             <version>${project.version}</version>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.alindner.cish</groupId>
             <artifactId>compiler</artifactId>
-            <version>v0.3.6</version>
-            <scope>test</scope>
+            <version>${project.version}</version>
+            <scope>provided</scope>
         </dependency>
+
+        <!--        &lt;!&ndash; https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 &ndash;&gt;-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.apache.commons</groupId>-->
+        <!--            <artifactId>commons-lang3</artifactId>-->
+        <!--            <version>3.12.0</version>-->
+        <!--        </dependency>-->
+
     </dependencies>
-    <repositories>
-        <repository>
-            <id>oss-sonatype</id>
-            <name>oss-sonatype</name>
-            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
 </project>

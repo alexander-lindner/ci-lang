@@ -18,7 +18,7 @@ elif [[ "$GITHUB_REF" == refs/pull/*/merge ]]; then
 fi
 
 INTERPRETER="target/cish"
-./mvnw -B clean process-resources package
+./mvnw -B -Dversioning.disable=true -DskipTests clean process-resources package
 if [ -f $INTERPRETER ]; then
   rm $INTERPRETER
 fi
