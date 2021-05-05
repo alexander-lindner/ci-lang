@@ -21,7 +21,7 @@ public class ModuleManager {
 	}
 
 	public String getRequireString() {
-		final ModuleFinder pluginsFinder = ModuleFinder.of(this.getModulePaths().toArray(new Path[0]));
+		final ModuleFinder pluginsFinder = ModuleFinder.of(this.extensionManager.getModulesList().toArray(new Path[0]));
 
 		return pluginsFinder
 				.findAll()
