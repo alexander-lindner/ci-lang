@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ModuleManager {
 	private final Path             cishFile;
@@ -22,14 +23,12 @@ public class ModuleManager {
 
 	public String getRequireString() {
 		final ModuleFinder pluginsFinder = ModuleFinder.of(this.extensionManager.getModulesList().toArray(new Path[0]));
-
-		return pluginsFinder
+		final Stream<String> s = pluginsFinder
 				.findAll()
 				.stream()
 				.map(ModuleReference::descriptor)
-				.map(ModuleDescriptor::name)
-				.filter(s -> !s.equals("main"))
-				.collect(Collectors.joining(";\nrequires ", "\nrequires ", ";"));
+				.map(ModuleDescriptor::name);
+		return s.count() > 0 ? s.collect(Collectors.joining(";\nrequires ", "\nrequires ", ";")) : "";
 	}
 
 	public List<Path> getModulePaths() {
