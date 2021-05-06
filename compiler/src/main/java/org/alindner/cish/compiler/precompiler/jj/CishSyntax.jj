@@ -11,7 +11,9 @@ import java.nio.charset.Charset;
 import java.util.*;
 import java.io.*;
 import java.nio.file.*;
-import org.alindner.cish.compiler.precompiler.*;import org.alindner.cish.compiler.utils.Utils;
+import org.alindner.cish.compiler.precompiler.*;
+import org.alindner.cish.compiler.utils.Utils;
+import org.alindner.cish.compiler.utils.CishPath;
 
 @lombok.extern.log4j.Log4j2
 public class Parser {
@@ -192,7 +194,7 @@ String load():
             str=string()
             {
                 require.add(str);
-                Path b = Utils.getCompileDirOfShellScript(base,Path.of(str));
+                Path b = CishPath.getCompileDirOfShellScript(base,Path.of(str));
                 str="CishUtils.require(\""+base.toAbsolutePath().toString()+"\",\""+b.toAbsolutePath().toString().replaceAll(base.toAbsolutePath().toString(),"")+"\");";
             }
             <RIGHT_PAREN>

@@ -1,7 +1,6 @@
 package org.alindner.cish.compiler.utils;
 
 import lombok.extern.log4j.Log4j2;
-import org.alindner.cish.compiler.Props;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -117,35 +116,5 @@ public class Utils {
 		}
 	}
 
-	/**
-	 * get the cached base dir of the cish file
-	 *
-	 * @param file cish file
-	 *
-	 * @return cached dir
-	 */
-	public static Path getCompileDirOfShellScript(final Path file) {
-		return Utils.getCompileDirOfShellScript(Props.root, file);
-	}
 
-	/**
-	 * get the cached base dir of the cish file if it is a sub dir
-	 *
-	 * @param file   cish file
-	 * @param parent parent dir
-	 *
-	 * @return cached dir
-	 */
-	public static Path getCompileDirOfShellScript(final Path parent, final Path file) {
-		final Path sourceFile = parent.resolve("p" + Utils.hash(file.toAbsolutePath().getFileName().toString()));
-		try {
-			if (Files.notExists(sourceFile)) {
-				Files.createDirectory(sourceFile);
-			}
-		} catch (final IOException e) {
-			Utils.log.fatal("Couldn't create compile directory:{}", sourceFile);
-			throw new Error(e);
-		}
-		return sourceFile;
-	}
 }

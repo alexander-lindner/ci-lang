@@ -18,13 +18,13 @@ import java.util.Map;
 public class CishCompiler {
 
 	private final boolean debug;
-	private final Path    base;
+	private final Path    cishFile;
 	private       String  content;
 	private       Parser  parser;
 
-	public CishCompiler(final boolean debug, final Path base) {
+	public CishCompiler(final boolean debug, final Path cishFile) {
 		this.debug = debug;
-		this.base = base;
+		this.cishFile = cishFile;
 	}
 
 	/**
@@ -35,7 +35,7 @@ public class CishCompiler {
 	 * @throws ParseException syntax error
 	 */
 	public CishCompiler compile(final Path file) throws ParseException, FileNotFoundException {
-		this.parser = new Parser(new FileInputStream(file.toFile()), false, this.base);
+		this.parser = new Parser(new FileInputStream(file.toFile()), false, this.cishFile); //todo base to cishFIle in Parser
 		this.doCompile();
 		return this;
 	}
@@ -49,7 +49,7 @@ public class CishCompiler {
 	 * @throws ParseException syntax error
 	 */
 	public CishCompiler compile(final String content, final boolean renderClass) throws ParseException {
-		this.parser = new Parser(new StringReader(content), renderClass, this.base);
+		this.parser = new Parser(new StringReader(content), renderClass, this.cishFile);//todo base to cishFIle in Parser
 		this.doCompile();
 		return this;
 	}
@@ -71,7 +71,7 @@ public class CishCompiler {
 	 * @throws ParseException syntax error
 	 */
 	public CishCompiler compile() throws ParseException {
-		this.parser = new Parser(System.in, false, this.base);
+		this.parser = new Parser(System.in, false, this.cishFile); //todo base to cishFIle in Parser
 		this.doCompile();
 		return this;
 	}

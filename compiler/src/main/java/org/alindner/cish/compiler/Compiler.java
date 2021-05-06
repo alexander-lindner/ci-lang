@@ -32,7 +32,6 @@ public class Compiler {
 			Path.of("/var/lib/cish/extensions/"),
 			Path.of("./.cish/extensions/")
 	);
-	final         Path                base;
 	final         ExtensionManager    manager;
 	private final Path                cishFile;
 	private final boolean             debug;
@@ -48,20 +47,18 @@ public class Compiler {
 	public Compiler(final boolean debug, final Path cishFile) {
 		this.cishFile = cishFile.toAbsolutePath().normalize();
 		this.debug = debug;
-		this.base = Utils.getCompileDirOfShellScript(Props.root, this.cishFile);
 		this.pkg = false;
 		this.manager = new ExtensionManager(cishFile);
 
-		this.postCompiler = new PostCompiler(this.base, this.cishFile, this.manager);
+		this.postCompiler = new PostCompiler(this.cishFile, this.manager);
 	}
 
-	public Compiler(final boolean debug, final Path base, final Path cishFile, final boolean addPackage) {
-		this.cishFile = cishFile.toAbsolutePath().normalize();
+	public Compiler(final boolean debug, final Path cishFile, final Path subScript, final boolean addPackage) { //todo fix
+		this.cishFile = subScript.toAbsolutePath().normalize();
 		this.debug = debug;
-		this.base = Utils.getCompileDirOfShellScript(base, this.cishFile);
 		this.pkg = addPackage;
-		this.manager = new ExtensionManager(cishFile);
-		this.postCompiler = new PostCompiler(this.base, this.cishFile, this.manager);
+		this.manager = new ExtensionManager(subScript);
+		this.postCompiler = new PostCompiler(subScript, this.manager);
 	}
 
 
@@ -90,7 +87,7 @@ public class Compiler {
 	 * @throws ParseException a syntax error happened
 	 */
 	public Compiler compileCish(final String s) throws ParseException {
-		final CishCompiler c = new CishCompiler(this.debug, this.base).compile(s);
+		final CishCompiler c = new CishCompiler(this.debug, this.cishFile).compile(s);
 		final String       p = this.pkg ? "main.p" + Utils.hash(this.cishFile.toAbsolutePath().getFileName().toString()) : "main";
 		this.javaContent.put(
 				"Main",
@@ -118,7 +115,7 @@ public class Compiler {
 	 */
 	private void compileASubScript(final Path f) {
 		try {
-			new Compiler(this.debug, this.base, f, true)
+			new Compiler(this.debug, this.cishFile, f, true)
 					.loadScriptToMemory()
 					.compileCish(this.content)
 			//.compileJava(Collections.emptyList()) //todo

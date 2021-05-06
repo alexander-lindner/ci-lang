@@ -35,17 +35,6 @@ import java.util.stream.Collectors;
  */
 @Log4j2
 public class PostCompiler {
-	static {
-		if (!Files.isDirectory(CishPath.of("cache/compiled"))) {
-			try {
-				Files.createDirectories(CishPath.of("cache/compiled"));
-			} catch (final IOException e) {
-				PostCompiler.log.fatal("Couldn't create compilation directory. Shutdown.", e);
-				System.exit(-1);
-			}
-		}
-	}
-	final         Path                base;
 	private final List<Path>          listOfModules = new ArrayList<>();
 	private final Map<String, String> javaContent   = new TreeMap<>();
 	private final List<String>        imports       = new ArrayList<>();
@@ -56,8 +45,7 @@ public class PostCompiler {
 	private final ModuleManager       moduleManager;
 	private       Path                cishFile;
 
-	public PostCompiler(final Path base, final Path cishScript, final ExtensionManager manager) {
-		this.base = base;
+	public PostCompiler(final Path cishScript, final ExtensionManager manager) {
 		this.cishScript = cishScript;
 		this.moduleManager = new ModuleManager(cishScript, manager);
 	}
@@ -194,23 +182,22 @@ public class PostCompiler {
 		this.imports.addAll(imports);
 		this.prependsImports();
 
-		final ArrayList<Path> iterateList = new ArrayList<>();
-		iterateList.add(this.cishScript);
-		iterateList.addAll(
+		final ArrayList<Path> listOfAllScripts = new ArrayList<>();
+		listOfAllScripts.add(this.cishScript);
+		listOfAllScripts.addAll(
 				this.requires.stream()
 				             .map(Path::of)
 				             .collect(Collectors.toList())
 		);
-		iterateList.stream()
-		           .map(f -> Props.root.resolve(f.toAbsolutePath().getFileName().toString()))
-		           .map(Utils::getCompileDirOfShellScript)
-		           .forEach(f -> {
-			           try {
-				           this.compile(this.cishScript, this.moduleManager.getModulePathsForCompiler());
-			           } catch (final Exception e) {
-				           PostCompiler.log.error("Couldn't compile file " + this.cishScript, e);
-			           }
-		           });
+		listOfAllScripts.stream()
+		                .map(CishPath::getCompileDirOfShellScript)
+		                .forEach(f -> {
+			                try {
+				                this.compile(this.cishScript, this.moduleManager.getModulePathsForCompiler());
+			                } catch (final Exception e) {
+				                PostCompiler.log.error("Couldn't compile file " + this.cishScript, e);
+			                }
+		                });
 	}
 
 	/**
@@ -227,7 +214,7 @@ public class PostCompiler {
 				.map(s -> {
 					final URI      fileName = URI.create(s);
 					final String[] tmp      = fileName.getPath().split("/");
-					final Path     target   = this.base.resolve(tmp[tmp.length - 1]);
+					final Path     target   = CishPath.ofCishFile(this.cishFile).resolve(tmp[tmp.length - 1]);
 
 					if (fileName.getScheme().equals("http") || fileName.getScheme().equals("https")) {
 						try {
@@ -301,11 +288,11 @@ public class PostCompiler {
 	 */
 	private void putBashContentToFile() throws IOException {
 		for (final Map.Entry<String, String> entry : this.bash.entrySet()) {
-			if (Files.isDirectory(this.base)) {
-				Files.deleteIfExists(this.base);
-				Files.createDirectory(this.base);
+			if (Files.isDirectory(CishPath.ofCishFile(this.cishFile))) {
+				Files.deleteIfExists(CishPath.ofCishFile(this.cishFile));
+				Files.createDirectory(CishPath.ofCishFile(this.cishFile));
 			}
-			final Path currentFile = this.base.resolve(entry.getKey() + ".sh");
+			final Path currentFile = CishPath.ofCishFile(this.cishFile).resolve(entry.getKey() + ".sh");
 			Files.write(currentFile, ("#!/bin/bash \n" + entry.getValue()).getBytes(StandardCharsets.UTF_8));
 		}
 	}
