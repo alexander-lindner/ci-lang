@@ -1,3 +1,7 @@
+FROM ubuntu:20.10 as build
+RUN mkdir -p /usr/lib/cish/dependencies
+ADD lib/* /usr/lib/cish/dependencies/
+
 FROM gcr.io/distroless/java:11
 
 MAINTAINER Alexander Lindner <25225552+alexander-lindner@users.noreply.github.com>
@@ -5,8 +9,7 @@ MAINTAINER Alexander Lindner <25225552+alexander-lindner@users.noreply.github.co
 WORKDIR /app
 ENV HOME /app
 ADD cish /bin/cish
-RUN mkdir -p /usr/lib/cish/dependencies
-ADD lib/* /usr/lib/cish/dependencies/
+COPY --from=build /usr/lib/cish/dependencies /usr/lib/cish/dependencies
 
 CMD ["/bin/cish"]
 ENTRYPOINT ["/bin/cish"]
