@@ -28,3 +28,5 @@ mv target/lib ./docker/build
 cp interpreter/target/interpreter-*.jar ./docker/build/lib/
 cp ./execTemplate.sh ./docker/build/cish
 cp ./execTemplate.sh $INTERPRETER
+chmod +x $INTERPRETER
+chmod +x ./docker/build/cish
