@@ -8,7 +8,15 @@ public class CishPath {
 	static final Path base          = Path.of(".").resolve(".cish");
 	static final Path baseExtension = CishPath.base.resolve("extensions");
 	static final Path baseCompiled  = CishPath.base.resolve("cache/compiled");
-
+	static {
+		if (Files.notExists(CishPath.baseCompiled)) {
+			try {
+				Files.createDirectories(CishPath.baseCompiled);
+			} catch (final IOException e) {
+				e.printStackTrace(); // todo
+			}
+		}
+	}
 	public static Path of(final String relativePath) {
 		return CishPath.base.resolve(relativePath).toAbsolutePath();
 	}

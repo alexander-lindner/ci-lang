@@ -9,4 +9,6 @@ ENV M2_HOME /usr/share/maven
 WORKDIR /app
 
 ADD cish /bin/cish
+RUN mkdir -p /usr/lib/cish/dependencies
+ADD lib/* /usr/lib/cish/dependencies/
 RUN chmod +x /bin/cish

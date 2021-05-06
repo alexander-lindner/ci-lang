@@ -59,6 +59,23 @@ jobs:
           context: ./docker/build/
           file: ./docker/build/Dockerfile
           tags: alexanderlindner/cish:latest
+      - name: docker alpine
+        id: docker_build_alpine
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          context: ./docker/build/
+          file: ./docker/build/Dockerfile.alpine
+          tags: alexanderlindner/cish:alpine
+
+      - name: docker distroless
+        id: docker_build_distroless
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          context: ./docker/build/
+          file: ./docker/build/Dockerfile.distroless
+          tags: alexanderlindner/cish:distroless
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}

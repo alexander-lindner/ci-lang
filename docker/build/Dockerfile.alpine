@@ -4,7 +4,9 @@ MAINTAINER Alexander Lindner <25225552+alexander-lindner@users.noreply.github.co
 
 WORKDIR /app
 ENV HOME /app
-ADD cish-alpine /bin/cish
+ADD cish /bin/cish
+RUN mkdir -p /usr/lib/cish/dependencies
+ADD lib/* /usr/lib/cish/dependencies/
 
 CMD ["/bin/cish"]
 ENTRYPOINT ["/bin/cish"]

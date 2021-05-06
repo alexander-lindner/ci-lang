@@ -23,13 +23,8 @@ if [ -f $INTERPRETER ]; then
   rm $INTERPRETER
 fi
 
-echo '#!/usr/bin/java -jar ' >$INTERPRETER
-cat interpreter/target/interpreter-*-jar-with-dependencies.jar >>$INTERPRETER
-chmod +x $INTERPRETER
-cp $INTERPRETER docker/build
-
-INTERPRETER="target/cish-alpine"
-echo '#!/opt/openjdk-15/bin/java -jar ' >$INTERPRETER
-cat interpreter/target/interpreter-*-jar-with-dependencies.jar >>$INTERPRETER
-chmod +x $INTERPRETER
-cp $INTERPRETER docker/build
+rm -rf ./docker/build/lib
+mv target/lib ./docker/build
+cp interpreter/target/interpreter-*.jar ./docker/build/lib/
+cp ./execTemplate.sh ./docker/build/cish
+cp ./execTemplate.sh $INTERPRETER

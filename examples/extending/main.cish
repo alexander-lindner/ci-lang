@@ -1,4 +1,4 @@
-#!/media/alindner/DATA/40_Privat/GitHub/alexander-lindner/cish/target/cish
+#!/bin/cish
 
 
 #load("Github.java")
