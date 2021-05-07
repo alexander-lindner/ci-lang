@@ -2,6 +2,14 @@ package org.alindner.cish.compiler.postcompiler.extension;
 
 import org.alindner.cish.extension.Type;
 
+/**
+ * A simple class for comparing two versions
+ * <p>
+ * todo: move to extension
+ *
+ * @author alindner
+ * @since 0.7.0
+ */
 public class Version implements Comparable<Version> {
 
 	private final String version;
@@ -14,7 +22,7 @@ public class Version implements Comparable<Version> {
 			version = String.valueOf(Integer.MAX_VALUE);
 		}
 		if (!version.matches("[0-9]+(\\.[0-9]+)*")) {
-			throw new IllegalArgumentException("Invalid version format: " + version);
+			throw new IllegalArgumentException(String.format("Invalid version format: %s", version));
 		}
 		this.version = version;
 	}
@@ -32,10 +40,8 @@ public class Version implements Comparable<Version> {
 		final String[] thatParts = that.get().split("\\.");
 		final int      length    = Math.max(thisParts.length, thatParts.length);
 		for (int i = 0; i < length; i++) {
-			final int thisPart = i < thisParts.length ?
-			                     Integer.parseInt(thisParts[i]) : 0;
-			final int thatPart = i < thatParts.length ?
-			                     Integer.parseInt(thatParts[i]) : 0;
+			final int thisPart = i < thisParts.length ? Integer.parseInt(thisParts[i]) : 0;
+			final int thatPart = i < thatParts.length ? Integer.parseInt(thatParts[i]) : 0;
 			if (thisPart < thatPart) {
 				return -1;
 			}

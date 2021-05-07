@@ -12,13 +12,22 @@ public class CishPath {
 	static final Path base          = CishPath.home.resolve(".cish");
 	static final Path baseExtension = CishPath.base.resolve("extensions");
 	static final Path baseCompiled  = CishPath.base.resolve("cache/compiled");
+	final static Path tmp           = CishPath.base.resolve("tmp");
+	final static Path cacheDir      = CishPath.base.resolve("cache");
 	static {
-		if (Files.notExists(CishPath.baseCompiled)) {
-			try {
-				Files.createDirectories(CishPath.baseCompiled);
-			} catch (final IOException e) {
-				e.printStackTrace(); // todo
+		try {
+			if (Files.notExists(CishPath.tmp)) {
+				Files.createDirectories(CishPath.tmp);
 			}
+			if (Files.notExists(CishPath.cacheDir)) {
+				Files.createDirectories(CishPath.cacheDir);
+			}
+			if (Files.notExists(CishPath.baseCompiled)) {
+				Files.createDirectories(CishPath.baseCompiled);
+			}
+		} catch (final IOException e) {
+			CishPath.log.fatal("Couldn't create directory.", e);
+			throw new Error("Unable to create the directory inside the home directory", e);
 		}
 	}
 	public static Path of(final String relativePath) {
@@ -33,6 +42,14 @@ public class CishPath {
 		return CishPath.baseCompiled.resolve(relativePath).toAbsolutePath();
 	}
 
+	public static Path ofCacheDir(final String relativePath) {
+		return CishPath.cacheDir.resolve(relativePath).toAbsolutePath();
+	}
+
+	public static Path ofTmp(final String relativePath) {
+		return CishPath.tmp.resolve(relativePath).toAbsolutePath();
+	}
+
 	public static Path ofCishFile(final Path cishFile) {
 		return CishPath.baseCompiled.resolve(CishPath.getCompileDirOfShellScript(cishFile)).toAbsolutePath();
 	}
@@ -43,21 +60,28 @@ public class CishPath {
 			try {
 				Files.createDirectories(mainPath);
 			} catch (final IOException e) {
-				e.printStackTrace(); // todo
+				CishPath.log.fatal("Couldn't create directory.", e);
+				throw new Error("Unable to create the directory inside the home directory", e);
 			}
 		}
 		return mainPath;
 	}
 
-	public static Path mainFile(final Path cishFile) {
-		if (Files.notExists(CishPath.modulePath(cishFile).resolve("main/Main.java").getParent())) {
+	public static Path mainPackage(final Path cishFile) {
+		final Path main = CishPath.modulePath(cishFile).resolve("main");
+		if (Files.notExists(main)) {
 			try {
-				Files.createDirectories(CishPath.modulePath(cishFile).resolve("main/Main.java").getParent());
+				Files.createDirectories(main);
 			} catch (final IOException e) {
-				e.printStackTrace(); // todo
+				CishPath.log.fatal("Couldn't create directory.", e);
+				throw new Error("Unable to create the directory inside the home directory", e);
 			}
 		}
-		return CishPath.modulePath(cishFile).resolve("main/Main.java");
+		return main;
+	}
+
+	public static Path mainFile(final Path cishFile) {
+		return CishPath.mainPackage(cishFile).resolve("Main.java");
 	}
 
 	public static Path outPath(final Path cishFile) {

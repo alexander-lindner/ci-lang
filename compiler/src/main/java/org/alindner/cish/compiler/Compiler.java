@@ -27,11 +27,7 @@ import java.util.regex.Matcher;
 @Log4j2
 @Getter
 public class Compiler {
-	final static  List<Path>          directories = List.of(
-			Path.of("~/.cish/extensions/"),
-			Path.of("/var/lib/cish/extensions/"),
-			Path.of("./.cish/extensions/")
-	);
+
 	final         ExtensionManager    manager;
 	private final Path                cishFile;
 	private final boolean             debug;
@@ -136,7 +132,7 @@ public class Compiler {
 		} catch (final ParseException e) {
 			throw new CishSyntaxError("The provided script contains a syntax error.", e);
 		}
-		Compiler.directories.forEach(this.manager::scanForExtensions);
+		this.manager.scanForExtensions();
 		this.manager.processFoundExtensions();
 		try {
 			this.postCompiler.compileJava(this.manager.getImports(), this.javaContent);
@@ -149,9 +145,9 @@ public class Compiler {
 	/**
 	 * execute the compiled cish script
 	 *
-	 * @param simpleParameters
-	 * @param argsList
-	 * @param parameters
+	 * @param simpleParameters the parameters like -version
+	 * @param argsList         the parameters like `0.3.2`
+	 * @param parameters       the parameters like --version=test
 	 */
 	public void run(final List<String> simpleParameters, final List<String> argsList, final Map<String, String> parameters) {
 		this.postCompiler.run(simpleParameters, argsList, parameters);

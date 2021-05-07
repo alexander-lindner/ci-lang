@@ -11,10 +11,6 @@ import org.apache.commons.io.FilenameUtils;
 
 import javax.tools.*;
 import java.io.IOException;
-import java.lang.module.Configuration;
-import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleFinder;
-import java.lang.module.ModuleReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -134,27 +130,12 @@ public class PostCompiler {
 	/**
 	 * execute the compiled java code
 	 *
-	 * @param simpleParameters
-	 * @param argsList
-	 * @param parameters
+	 * @param simpleParameters the parameters like -version
+	 * @param argsList         the parameters like `0.3.2`
+	 * @param parameters       the parameters like --version=test
 	 */
 	public void run(final List<String> simpleParameters, final List<String> argsList, final Map<String, String> parameters) {
-		final ModuleFinder pluginsFinder = ModuleFinder.of(this.moduleManager.getModulePaths().toArray(new Path[0]));
-
-		final List<String> moduleNames = pluginsFinder
-				.findAll()
-				.stream()
-				.map(ModuleReference::descriptor)
-				.map(ModuleDescriptor::name)
-				.collect(Collectors.toList());
-
-		final Configuration pluginsConfiguration = ModuleLayer
-				.boot()
-				.configuration()
-				.resolve(pluginsFinder, ModuleFinder.of(), moduleNames);
-		final ModuleLayer layer = ModuleLayer
-				.boot()
-				.defineModulesWithOneLoader(pluginsConfiguration, this.getClass().getClassLoader());
+		final ModuleLayer layer = this.moduleManager.getLayer();
 
 		try {
 			final Class<?> cls  = Class.forName("main.Main", true, layer.findLoader("cishResult"));
@@ -225,9 +206,8 @@ public class PostCompiler {
 							PostCompiler.log.error("Failed creating and downloading a url form string", e);
 						}
 					} else {
-						final Path origFile = Path.of(fileName);
 						try {
-							Files.copy(origFile, target);
+							Files.copy(Path.of(fileName), target);
 						} catch (final IOException e) {
 							PostCompiler.log.error("Failed copying the file to the cached target dir", e);
 						}
@@ -258,8 +238,8 @@ public class PostCompiler {
 
 		final List<String> tmpContent = Files.readAllLines(CishPath.mainFile(this.cishScript));
 		tmpContent.add(1, content.get());
-		Files.write(CishPath.mainFile(this.cishScript), tmpContent);
 
+		Files.write(CishPath.mainFile(this.cishScript), tmpContent);
 		Files.write(
 				CishPath.moduleInfoFile(this.cishScript),
 				String.format(
@@ -276,7 +256,7 @@ public class PostCompiler {
 	 */
 	private void putJavaContentToFile() throws IOException {
 		for (final Map.Entry<String, String> entry : this.javaContent.entrySet()) {
-			final Path currentFile = CishPath.mainFile(this.cishScript).getParent().resolve(entry.getKey() + ".java"); //todo move to CishPath
+			final Path currentFile = CishPath.mainPackage(this.cishScript).resolve(entry.getKey() + ".java");
 			Files.write(currentFile, entry.getValue().getBytes(StandardCharsets.UTF_8));
 		}
 	}

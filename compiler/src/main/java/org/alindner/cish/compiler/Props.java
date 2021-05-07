@@ -1,6 +1,5 @@
 package org.alindner.cish.compiler;
 
-import java.nio.file.Path;
 import java.util.regex.Pattern;
 
 /**
@@ -17,8 +16,4 @@ public class Props {
 	 * regex for detecting the class name
 	 */
 	public static final Pattern regexClassPattern = Pattern.compile("(?<=\\n|\\A)(?:public\\s)?(class|interface|enum)\\s([^\\n\\s]*)", Pattern.MULTILINE);
-	/**
-	 * Roots cache dir
-	 */
-	public static final Path    root              = Path.of("./.cish/cache/compiled").toAbsolutePath();
 }

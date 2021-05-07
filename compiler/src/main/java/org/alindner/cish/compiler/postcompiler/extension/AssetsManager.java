@@ -1,75 +1,50 @@
 package org.alindner.cish.compiler.postcompiler.extension;
 
 import lombok.extern.log4j.Log4j2;
+import org.alindner.cish.compiler.utils.CishPath;
 import org.alindner.cish.compiler.utils.Utils;
 
 import java.io.*;
 import java.net.URL;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+/**
+ * Manages all Assets, which are different kinds of files.
+ * <p>
+ * It is thread save and {@link Serializable}. Downloads the file, if it wasn't already downloaded.
+ *
+ * @author alindner
+ * @since 0.7.0
+ */
 @Log4j2
-public class AssetsManager implements Serializable {
-	final static         Path homeDir              = Path.of(System.getProperty("user.home"));
-	final static         Path basePathOfCishTmpDir = AssetsManager.homeDir.resolve(".cish/tmp");
-	final static         Path cacheDir             = AssetsManager.homeDir.resolve(".cish/cache");
-	private static final long serialVersionUID     = 7691572604648016027L;
-	static {
-		if (!Files.isDirectory(AssetsManager.basePathOfCishTmpDir) && !Files.exists(AssetsManager.basePathOfCishTmpDir)) {
-			try {
-				Files.createDirectories(AssetsManager.basePathOfCishTmpDir);
-			} catch (final IOException e) {
-				throw new Error("Unable to create the working directory inside the home directory");
-			}
-		}
+public final class AssetsManager implements Serializable {
+	private static final long                        serialVersionUID = 7691572604648016027L;
+	private final        CopyOnWriteArrayList<Asset> database         = new CopyOnWriteArrayList<>();
+	private transient    Path                        file;
 
-		if (!Files.isDirectory(AssetsManager.cacheDir) && !Files.exists(AssetsManager.cacheDir)) {
-			try {
-				Files.createDirectories(AssetsManager.cacheDir);
-			} catch (final IOException e) {
-				throw new Error("Unable to create the cache directory inside the home directory");
-			}
-		}
-	}
-	CopyOnWriteArrayList<Asset> database = new CopyOnWriteArrayList<>();
-	private transient Path file;
-
-	public AssetsManager(final Path file) {
+	/**
+	 * storage path of the {@link AssetsManager}
+	 *
+	 * @param file storage path
+	 */
+	private AssetsManager(final Path file) {
 		this.file = file;
 	}
 
-	private static String bytesToHex(final byte[] hash) {
-		final StringBuilder hexString = new StringBuilder(2 * hash.length);
-		for (final byte b : hash) {
-			final String hex = Integer.toHexString(0xff & b);
-			if (hex.length() == 1) {
-				hexString.append('0');
-			}
-			hexString.append(hex);
-		}
-		return hexString.toString();
-	}
-
-	private static String hash(final String fileName) {
-		final MessageDigest digest;
-		try {
-			digest = MessageDigest.getInstance("SHA-256");
-		} catch (final NoSuchAlgorithmException e) {
-			AssetsManager.log.fatal("Couldn't load SHA-256 hash", e);
-			throw new Error("Couldn't load SHA-256 hash");
-		}
-		final byte[] hashBytes = digest.digest(fileName.getBytes(StandardCharsets.UTF_8));
-		return AssetsManager.bytesToHex(hashBytes);
-	}
-
+	/**
+	 * load an instance of {@link AssetsManager} from file. This is possible, because {@link AssetsManager} is {@link Serializable}
+	 *
+	 * @param file file path of the {@link AssetsManager}
+	 *
+	 * @return instance
+	 */
 	public static AssetsManager load(final Path file) {
-		final Path storePath = AssetsManager.cacheDir.resolve(Utils.hash(file.toAbsolutePath().toString()));
+		final Path storePath = CishPath.ofCacheDir(Utils.hash(file.toAbsolutePath().toString()));
 		if (Files.exists(storePath)) {
 			try (final ObjectInputStream ois = new ObjectInputStream(new FileInputStream(storePath.toAbsolutePath().toString()))) {
 				AssetsManager.log.info("Loading cached AssetsManger");
@@ -82,11 +57,23 @@ public class AssetsManager implements Serializable {
 		return new AssetsManager(file);
 	}
 
-	public static Asset download(final URL url) throws IOException {
+	/**
+	 * Download a file form url.
+	 * <p>
+	 * Will be saved in the cish tmp directory.
+	 *
+	 * @param url url
+	 *
+	 * @return representation of the downloaded file
+	 *
+	 * @throws IOException if download failed
+	 * @see CishPath#ofTmp(String)
+	 */
+	private static Asset download(final URL url) throws IOException {
 		try {
 			final ReadableByteChannel rbc    = Channels.newChannel(url.openStream());
-			final String              hash   = AssetsManager.hash(Path.of(url.getFile()).getFileName().toString());
-			final Path                target = AssetsManager.basePathOfCishTmpDir.resolve(hash + ".jar");
+			final String              hash   = Utils.hash(Path.of(url.getFile()).getFileName().toString());
+			final Path                target = CishPath.ofTmp(hash + ".jar");
 			final FileOutputStream    fos;
 			fos = new FileOutputStream(target.toAbsolutePath().toString());
 			fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
@@ -97,8 +84,11 @@ public class AssetsManager implements Serializable {
 		}
 	}
 
+	/**
+	 * save this class to the filesystem
+	 */
 	public void store() {
-		final Path storePath = AssetsManager.cacheDir.resolve(Utils.hash(this.file.toAbsolutePath().toString()));
+		final Path storePath = CishPath.ofCacheDir(Utils.hash(this.file.toAbsolutePath().toString()));
 		try (final ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(storePath.toAbsolutePath().toString()))) {
 			oos.writeObject(this);
 		} catch (final IOException e) {
@@ -107,23 +97,48 @@ public class AssetsManager implements Serializable {
 		}
 	}
 
-
-	public Asset getByUrl(final URL u) throws IOException {
-		if (this.database.stream().anyMatch(asset -> asset.getUrl().equals(u))) {
-			return this.database.stream().filter(asset -> asset.getUrl().equals(u)).findFirst().orElseThrow(Error::new);
+	/**
+	 * get a asset by url.
+	 * <p>
+	 * If the asset was already downloaded, get the reference to it. If not, it will be downloaded and cached.
+	 *
+	 * @param url url
+	 *
+	 * @return representation of the downloaded file
+	 *
+	 * @throws IOException if download failed
+	 */
+	public Asset getByUrl(final URL url) throws IOException {
+		final Optional<Asset> o = this.database.stream().filter(asset -> asset.getUrl().equals(url)).findFirst();
+		if (o.isPresent()) {
+			return o.get();
 		} else {
-			final Asset asset = AssetsManager.download(u);
+			final Asset asset = AssetsManager.download(url);
 			this.database.add(asset);
 			return asset;
 		}
 	}
 
-
+	/**
+	 * serialize this object
+	 *
+	 * @param oos ObjectOutputStream
+	 *
+	 * @throws IOException if I/O errors occur while writing to the underlying OutputStream
+	 */
 	private void writeObject(final ObjectOutputStream oos) throws IOException {
 		oos.defaultWriteObject();
 		oos.writeUTF(this.file.toAbsolutePath().toString());
 	}
 
+	/**
+	 * deserialize this object
+	 *
+	 * @param ois ObjectInputStream
+	 *
+	 * @throws ClassNotFoundException if the class of a serialized object could not be found.
+	 * @throws IOException            if an I/O error occurs.
+	 */
 	private void readObject(final ObjectInputStream ois) throws IOException, ClassNotFoundException {
 		ois.defaultReadObject();
 		this.file = Path.of(ois.readUTF());
