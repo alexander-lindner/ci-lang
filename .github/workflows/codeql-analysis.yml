@@ -71,7 +71,7 @@ jobs:
           export VERSIONING_GIT_BRANCH=${GITHUB_REF#refs/};
           VERSIONING_GIT_BRANCH=${VERSIONING_GIT_BRANCH%/merge};
           fi
-          ./build.sh
+          ./build/build.sh
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v1
