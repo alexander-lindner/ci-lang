@@ -2,7 +2,7 @@ name: ci
 
 on:
   push:
-    branches: master
+    branches: [ master ]
 
 jobs:
   main:
@@ -49,23 +49,23 @@ jobs:
           export VERSIONING_GIT_BRANCH=${GITHUB_REF#refs/};
           VERSIONING_GIT_BRANCH=${VERSIONING_GIT_BRANCH%/merge};
           fi
-          ./build.sh
+          ./build/build.sh
 
       - name: docker
         id: docker_build
         uses: docker/build-push-action@v2
         with:
           push: true
-          context: ./docker/build/
-          file: ./docker/build/Dockerfile
+          context: ./build/docker/
+          file: ./build/docker/Dockerfile
           tags: alexanderlindner/cish:latest
       - name: docker alpine
         id: docker_build_alpine
         uses: docker/build-push-action@v2
         with:
           push: true
-          context: ./docker/build/
-          file: ./docker/build/Dockerfile.alpine
+          context: ./build/docker/
+          file: ./build/docker/Dockerfile.alpine
           tags: alexanderlindner/cish:alpine
 
       - name: docker distroless
@@ -73,8 +73,8 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          context: ./docker/build/
-          file: ./docker/build/Dockerfile.distroless
+          context: ./build/docker/
+          file: ./build/docker/Dockerfile.distroless
           tags: alexanderlindner/cish:distroless
 
       - name: Image digest
@@ -132,15 +132,15 @@ jobs:
           export VERSIONING_GIT_BRANCH=${GITHUB_REF#refs/};
           VERSIONING_GIT_BRANCH=${VERSIONING_GIT_BRANCH%/merge};
           fi
-          ./build.sh
+          ./build/build.sh
 
       - name: docker
         id: docker_build
         uses: docker/build-push-action@v2
         with:
           push: true
-          context: ./docker/build/
-          file: ./docker/build/Dockerfile
+          context: ./build/docker/
+          file: ./build/docker/Dockerfile
           tags: alexanderlindner/cish:latest
 
       - name: docker alpine
@@ -148,8 +148,8 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          context: ./docker/build/
-          file: ./docker/build/Dockerfile.alpine
+          context: ./build/docker/
+          file: ./build/docker/Dockerfile.alpine
           tags: alexanderlindner/cish:alpine
 
       - name: docker distroless
@@ -157,8 +157,8 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          context: ./docker/build/
-          file: ./docker/build/Dockerfile.distroless
+          context: ./build/docker/
+          file: ./build/docker/Dockerfile.distroless
           tags: alexanderlindner/cish:distroless
 
       - name: Image digest

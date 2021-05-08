@@ -17,16 +17,16 @@ elif [[ "$GITHUB_REF" == refs/pull/*/merge ]]; then
   VERSIONING_GIT_BRANCH=${VERSIONING_GIT_BRANCH%/merge}
 fi
 
-INTERPRETER="target/cish"
+INTERPRETER="./build/target/cish"
 ./mvnw -B -Dversioning.disable=true -DskipTests clean process-resources package
 if [ -f $INTERPRETER ]; then
   rm $INTERPRETER
 fi
 
 rm -rf ./docker/build/lib
-mv target/lib ./docker/build
-cp interpreter/target/interpreter-*.jar ./docker/build/lib/
-cp ./execTemplate.sh ./docker/build/cish
-cp ./execTemplate.sh $INTERPRETER
+cp -r ./build/target/lib ./build/docker/
+cp ./interpreter/target/interpreter-*.jar ./build/docker/lib/
+cp ./build/execTemplate.sh ./build/docker/cish
+cp ./build/execTemplate.sh $INTERPRETER
 chmod +x $INTERPRETER
-chmod +x ./docker/build/cish
+chmod +x ./build/docker/cish

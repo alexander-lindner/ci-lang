@@ -53,6 +53,8 @@ public class Regex {
 	/**
 	 * Attempts to match the entire region against the pattern.
 	 *
+	 * @param toString the string, which should be tested
+	 *
 	 * @return {@code true} if, and only if, the entire region sequence matches this matcher's pattern
 	 */
 	public boolean matches(final String toString) {

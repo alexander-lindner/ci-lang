@@ -1,0 +1,28 @@
+#!/bin/cish
+
+Console::print(IO::findFiles(".", "*-dependencies.jar"))
+Console::print(IO::findFiles(".", "*/compiler-v?.?.?-*-dependencies.jar"))
+Console::print(IO::findFiles(".", &"(.*)-dependencies.jar"))
+
+regexVariable = &"(.*)-dependencies.jar"
+if(regexVariable.matches("dependencies.jar")){
+ Console::print("Matches dependencies.jar")
+}
+
+if(regexVariable.matches("lang-v0.3.5-STABLE-5e542e8e79b77a52b40ebf99bae6c8e35e131b76-jar-with-dependencies.jar")){
+ Console::print("Matches lang-v0.3.5-STABLE-5e542e8e79b77a52b40ebf99bae6c8e35e131b76-jar-with-dependencies.jar")
+}
+
+#if(&"(.*)-dependencies.jar".matches("jar-with-dependencies.jar")){
+# Console::print("Matches jar-with-dependencies.jar")
+#}
+
+
+IO::findFiles(".", regexVariable).exec((file) -> {
+  Console::print(regexVariable.replaceAll(file,"$1"))
+});
+
+regexVariableForExtracting = &"(.*)/(.*)jar-with-dependencies.jar"
+IO::findFiles(".", regexVariable).exec((file) -> {
+  Console::print(regexVariableForExtracting.extract(file.toString(),2))
+});

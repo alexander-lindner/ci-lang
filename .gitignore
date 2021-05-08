@@ -149,6 +149,6 @@ buildNumber.properties
 .mvn/home
 
 .cish
-/docker/build/cish*
+/build/docker/cish*
 /.github/actions/node_modules/
-/docker/build/lib/
+/build/docker/lib/

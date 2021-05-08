@@ -78,6 +78,7 @@ public class Interpreter {
 	 *
 	 * @throws IOException    errors during script reading
 	 * @throws ParseException errors during script parsing
+	 * @throws CishException  errors during script parsing
 	 */
 	public static void main(final String[] args) throws IOException, ParseException, CishException {
 		new Interpreter(args).loadFiles();
