@@ -1,6 +1,6 @@
-package org.alindner.cish.compiler.precompiler;
+package org.alindner.cish.compiler.exceptions;
 
-public class CishCompileException extends Exception {
+public class CishCompileException extends CishException {
 
 	private static final long serialVersionUID = -250809705165455312L;
 

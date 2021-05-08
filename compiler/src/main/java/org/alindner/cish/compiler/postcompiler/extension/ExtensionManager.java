@@ -64,7 +64,7 @@ public final class ExtensionManager {
 		                            .map(file -> es.submit(new DependencyWorker(file)))
 		                            .forEach(e -> {
 			                            try {
-				                            this.queue.addAll(e.get().getQueue()); //todo using executor service in parallel stream is maybe not the best idea...
+				                            this.queue.addAll(e.get().getDependenciesList()); //todo using executor service in parallel stream is maybe not the best idea...
 			                            } catch (final InterruptedException | ExecutionException interruptedException) {
 				                            ExtensionManager.log.error("Couldn't load extension {}. Thread was interrupted.", () -> interruptedException);
 				                            ExtensionManager.log.error(e);

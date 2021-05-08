@@ -1,19 +1,19 @@
-package org.alindner.cish.compiler.postcompiler.extension;
-
-import org.alindner.cish.extension.Type;
+package org.alindner.cish.extension;
 
 /**
  * A simple class for comparing two versions
- * <p>
- * todo: move to extension
  *
  * @author alindner
  * @since 0.7.0
  */
 public class Version implements Comparable<Version> {
-
 	private final String version;
 
+	/**
+	 * Constructor.
+	 *
+	 * @param version versions string
+	 */
 	public Version(String version) {
 		if (version == null) {
 			throw new IllegalArgumentException("Version can not be null");
@@ -27,10 +27,23 @@ public class Version implements Comparable<Version> {
 		this.version = version;
 	}
 
+	/**
+	 * get the versions string
+	 *
+	 * @return versions string
+	 */
 	public final String get() {
 		return this.version;
 	}
 
+	/**
+	 * Compares this object with the specified object for order.  Returns a negative integer, zero, or a positive integer as this object is less than, equal to, or greater than the
+	 * specified object.
+	 *
+	 * @param that the object, which should be compared to
+	 *
+	 * @return order integer
+	 */
 	@Override
 	public int compareTo(final Version that) {
 		if (that == null) {
@@ -52,6 +65,14 @@ public class Version implements Comparable<Version> {
 		return 0;
 	}
 
+
+	/**
+	 * equals method
+	 *
+	 * @param that other object
+	 *
+	 * @return true if they are equal
+	 */
 	@Override
 	public boolean equals(final Object that) {
 		if (this == that) {
@@ -66,6 +87,14 @@ public class Version implements Comparable<Version> {
 		return this.compareTo((Version) that) == 0;
 	}
 
+	/**
+	 * check if the given version is {@link Type#EQUALS}, {@link Type#LOWER}, {@link Type#HIGHER}, {@link Type#ALL} than the version of this object
+	 *
+	 * @param that given version
+	 * @param type comparison type
+	 *
+	 * @return true, if the type holds
+	 */
 	public boolean compareTo(final Version that, final Type type) {
 		final int compareTo = this.compareTo(that);
 		switch (type) {

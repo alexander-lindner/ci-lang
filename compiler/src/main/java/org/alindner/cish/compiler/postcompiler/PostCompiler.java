@@ -3,8 +3,8 @@ package org.alindner.cish.compiler.postcompiler;
 
 import lombok.extern.log4j.Log4j2;
 import org.alindner.cish.compiler.Props;
+import org.alindner.cish.compiler.exceptions.CishCompileException;
 import org.alindner.cish.compiler.postcompiler.extension.ExtensionManager;
-import org.alindner.cish.compiler.precompiler.CishCompileException;
 import org.alindner.cish.compiler.utils.CishPath;
 import org.alindner.cish.compiler.utils.Utils;
 import org.apache.commons.io.FilenameUtils;
@@ -34,9 +34,9 @@ public class PostCompiler {
 	private final List<Path>          listOfModules = new ArrayList<>();
 	private final Map<String, String> javaContent   = new TreeMap<>();
 	private final List<String>        imports       = new ArrayList<>();
-	private final List<String>        loads         = new ArrayList<>();
-	private final List<String>        requires      = new ArrayList<>();
-	private final Map<String, String> bash          = new TreeMap<>();
+	private final List<String>        loads         = new ArrayList<>(); //todo
+	private final List<String>        requires      = new ArrayList<>(); //todo
+	private final Map<String, String> bash          = new TreeMap<>(); //todo
 	private final Path                cishScript;
 	private final ModuleManager       moduleManager;
 	private       Path                cishFile;

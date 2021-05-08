@@ -3,9 +3,9 @@ package org.alindner.cish.compiler.postcompiler.extension.worker;
 import lombok.extern.log4j.Log4j2;
 import org.alindner.cish.compiler.postcompiler.extension.DependenciesMetaInfo;
 import org.alindner.cish.compiler.postcompiler.extension.FileInfo;
-import org.alindner.cish.compiler.postcompiler.extension.Version;
 import org.alindner.cish.compiler.postcompiler.predicates.Predicates;
 import org.alindner.cish.extension.Type;
+import org.alindner.cish.extension.Version;
 import org.alindner.cish.extension.annotations.*;
 import org.reflections.Reflections;
 import org.reflections.scanners.*;
@@ -24,16 +24,34 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+/**
+ * Handels the parsing and processing af an extension
+ * <p>
+ * it will dynamically read in the extension and search for classes and methods, which are annotated with {@link org.alindner.cish.extension.annotations.CishDependency}, using
+ * reflections. This takes a lot of time, therefore this class is thread-ready. For this reason, most of the methods are private.
+ *
+ * @author alindner
+ * @since 0.7.0
+ */
 @Log4j2
 public class DependencyWorker implements Callable<DependencyWorker> {
-	private final static List<String>    objList = Arrays.stream(Object.class.getMethods()).map(Method::getName).distinct().collect(Collectors.toList());
-	private final        Deque<FileInfo> queue   = new ArrayDeque<>();
-	private final        Path            file;
+	private final static List<String>   objList          = Arrays.stream(Object.class.getMethods()).map(Method::getName).distinct().collect(Collectors.toList());
+	private final        List<FileInfo> dependenciesList = new ArrayList<>();
+	private final        Path           file;
 
 	public DependencyWorker(final Path file) {
 		this.file = file;
 	}
 
+	/**
+	 * parses the {@link MavenDependency} annotation
+	 *
+	 * @param mavenDependency annotation
+	 *
+	 * @return parsed annotation
+	 *
+	 * @throws MalformedURLException if the values inside the given annotation are wrong formatted
+	 */
 	private static DependenciesMetaInfo buildMavenDependency(final MavenDependency mavenDependency) throws MalformedURLException {
 		DependencyWorker.log.debug("Found a MavenDependencies dependency");
 		final URL u = new URL(
@@ -58,8 +76,20 @@ public class DependencyWorker implements Callable<DependencyWorker> {
 		return dep;
 	}
 
-	private static DependenciesMetaInfo buildGenericDependency(final String value, final Type type, final String version) throws MalformedURLException {
-		final URL u = new URL(value);
+
+	/**
+	 * build a meta info object based on a url.
+	 *
+	 * @param url     url of dependency
+	 * @param type    type of dependency
+	 * @param version version of dependency
+	 *
+	 * @return parsed annotation
+	 *
+	 * @throws MalformedURLException if the values inside the given annotation are wrong formatted
+	 */
+	private static DependenciesMetaInfo buildGenericDependency(final String url, final Type type, final String version) throws MalformedURLException {
+		final URL u = new URL(url);
 
 		final DependenciesMetaInfo dep = DependenciesMetaInfo
 				.builder()
@@ -71,56 +101,79 @@ public class DependencyWorker implements Callable<DependencyWorker> {
 		return dep;
 	}
 
+	/**
+	 * parses the {@link JavaDependency} annotation
+	 *
+	 * @param javaDependency annotation
+	 *
+	 * @return parsed annotation
+	 *
+	 * @throws MalformedURLException if the values inside the given annotation are wrong formatted
+	 */
 	private static DependenciesMetaInfo buildJavaDependency(final JavaDependency javaDependency) throws MalformedURLException {
 		return DependencyWorker.buildGenericDependency(javaDependency.value(), javaDependency.type(), javaDependency.version());
 	}
 
+	/**
+	 * parses the {@link JarDependency} annotation
+	 *
+	 * @param jarDependency annotation
+	 *
+	 * @return parsed annotation
+	 *
+	 * @throws MalformedURLException if the values inside the given annotation are wrong formatted
+	 */
 	private static DependenciesMetaInfo buildJarDependency(final JarDependency jarDependency) throws MalformedURLException {
 		DependencyWorker.log.debug("Found a JarDependencies dependency");
 		return DependencyWorker.buildGenericDependency(jarDependency.value(), jarDependency.type(), jarDependency.version());
 	}
 
-	private static List<DependenciesMetaInfo> addDeps(final Method method, final Class<?> currentClass) {
+	/**
+	 * get all dependencies a method relies on
+	 *
+	 * @param method method
+	 *
+	 * @return list of dependencies
+	 */
+	private List<DependenciesMetaInfo> buildMethodDependenciesList(final Method method) {
 		final List<DependenciesMetaInfo> dependencies = new ArrayList<>();
-		if (method.isAnnotationPresent(MavenDependencies.class)) {
-			for (final MavenDependency mavenDependency : method.getAnnotation(MavenDependencies.class).value()) {
-
-				try {
+		try {
+			if (method.isAnnotationPresent(MavenDependencies.class)) {
+				for (final MavenDependency mavenDependency : method.getAnnotation(MavenDependencies.class).value()) {
 					dependencies.add(DependencyWorker.buildMavenDependency(mavenDependency));
-				} catch (final MalformedURLException e) {
-					e.printStackTrace();
 				}
-
 			}
-		}
-		if (method.isAnnotationPresent(JarDependencies.class)) {
-			for (final JarDependency jarDependency : method.getAnnotation(JarDependencies.class).value()) {
-
-				try {
+			if (method.isAnnotationPresent(JarDependencies.class)) {
+				for (final JarDependency jarDependency : method.getAnnotation(JarDependencies.class).value()) {
 					dependencies.add(DependencyWorker.buildJarDependency(jarDependency));
-				} catch (final MalformedURLException e) {
-					e.printStackTrace();
 				}
-
 			}
-		}
-		if (method.isAnnotationPresent(JavaDependencies.class)) {
-			for (final JavaDependency javaDependency : method.getAnnotation(JavaDependencies.class).value()) {
-
-				try {
+			if (method.isAnnotationPresent(JavaDependencies.class)) {
+				for (final JavaDependency javaDependency : method.getAnnotation(JavaDependencies.class).value()) {
 					dependencies.add(DependencyWorker.buildJavaDependency(javaDependency));
-				} catch (final MalformedURLException e) {
-					e.printStackTrace();
 				}
 			}
+		} catch (final MalformedURLException e) {
+			DependencyWorker.log.error(String.format(
+					"Couldn't parse URL from a given extensions. This will most probably a bug in the extension itself. Extension file: %s",
+					this.file
+			), e);
 		}
 		return dependencies;
 	}
 
-	public Deque<FileInfo> getQueue() {
-		return this.queue;
+	/**
+	 * get the build list of dependencies
+	 *
+	 * @return list of dependencies
+	 */
+	public List<FileInfo> getDependenciesList() {
+		return this.dependenciesList;
 	}
 
+	/**
+	 * parses all dependencies for the given file using reflection.
+	 */
 	private void buildQueue() {
 		try {
 			DependencyWorker.log.debug("Search for the extension in {}", this.file::toAbsolutePath);
@@ -179,7 +232,7 @@ public class DependencyWorker implements Callable<DependencyWorker> {
 				DependencyWorker.log.debug("search for methods and their dependencies and conflicts");
 				final List<String> methods = new ArrayList<>();
 				for (final Method method : currentClass.getMethods()) {
-					final List<DependenciesMetaInfo> deps = DependencyWorker.addDeps(method, currentClass);
+					final List<DependenciesMetaInfo> deps = this.buildMethodDependenciesList(method);
 					DependencyWorker.log.debug("Found the following dependency list: {}", () -> deps);
 					dependencies.addAll(deps);
 					methods.add(method.getName());
@@ -187,7 +240,7 @@ public class DependencyWorker implements Callable<DependencyWorker> {
 
 
 				final FileInfo entry;
-				this.queue.offerLast(
+				this.dependenciesList.add(
 						entry = FileInfo.builder()
 						                .file(this.file)
 						                .version(new Version(annotationCishExtension.value()))
@@ -205,10 +258,10 @@ public class DependencyWorker implements Callable<DependencyWorker> {
 				final CishExtension annotation = method.getAnnotation(CishExtension.class);
 				final List<String>  classes    = List.of(annotation.getClass().getCanonicalName());
 				DependencyWorker.log.debug("Found the following conflicts list: {}", () -> classes);
-				final List<DependenciesMetaInfo> deps = DependencyWorker.addDeps(method, annotation.getClass());
+				final List<DependenciesMetaInfo> deps = this.buildMethodDependenciesList(method);
 				DependencyWorker.log.debug("Found the following dependency list: {}", () -> deps);
 				final FileInfo entry;
-				this.queue.offerLast(
+				this.dependenciesList.add(
 						entry = FileInfo.builder()
 						                .file(this.file)
 						                .version(new Version(annotation.value()))
@@ -229,7 +282,7 @@ public class DependencyWorker implements Callable<DependencyWorker> {
 				try {
 					final Predicate<?>                          t    = (Predicate<?>) predicateMethod.invoke(null);
 					final Map<Class<?>, Supplier<Predicate<?>>> list = Map.of(predicateMethod.getDeclaringClass(), () -> t);
-					DependencyWorker.log.debug("Builded predicate: {}", () -> list);
+					DependencyWorker.log.debug("Built predicate: {}", () -> list);
 					Predicates.addPredicate(name, list);
 				} catch (final IllegalAccessException | InvocationTargetException e) {
 					DependencyWorker.log.error("Couldn't build predicate.", e);
@@ -241,9 +294,13 @@ public class DependencyWorker implements Callable<DependencyWorker> {
 		}
 	}
 
-
+	/**
+	 * calls {@link #buildQueue()}
+	 *
+	 * @return this
+	 */
 	@Override
-	public DependencyWorker call() throws Exception {
+	public DependencyWorker call() {
 		this.buildQueue();
 		return this;
 	}

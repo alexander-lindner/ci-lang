@@ -151,3 +151,4 @@ buildNumber.properties
 .cish
 /docker/build/cish*
 /.github/actions/node_modules/
+/docker/build/lib/
