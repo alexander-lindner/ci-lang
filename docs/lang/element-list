@@ -1,8 +1,3 @@
-unnamed package
+module:org.alindner.cish.lang
 org.alindner.cish.lang
-org.alindner.cish.lang.datatype
-org.alindner.cish.lang.datatype.lambdas
-org.alindner.cish.lang.file
 org.alindner.cish.lang.functions.predicate
-org.alindner.cish.lang.internal
-org.alindner.cish.lang.structures
