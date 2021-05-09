@@ -1,6 +1,7 @@
 package org.alindner.cish.lang;
 
 
+import org.alindner.cish.extension.annotations.CishExtension;
 import org.alindner.cish.lang.file.FileExecutor;
 import org.apache.commons.io.FileUtils;
 
@@ -11,6 +12,7 @@ import java.util.List;
 /**
  * Interaction to the console / screen
  */
+@CishExtension("0.2")
 public class Console {
 	/**
 	 * print a string

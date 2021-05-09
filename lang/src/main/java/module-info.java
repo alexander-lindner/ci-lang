@@ -1,10 +1,14 @@
 module org.alindner.cish.lang {
 	exports org.alindner.cish.lang;
 	exports org.alindner.cish.lang.functions.predicate;
+	exports org.alindner.cish.lang.datatype.lambdas;
+	exports org.alindner.cish.lang.datatype;
+	exports org.alindner.cish.lang.structures;
+	exports org.alindner.cish.lang.file;
 
 	requires org.alindner.cish.extension;
 	requires static lombok;
-//	requires maven.invoker;
+	requires maven.invoker;
 	requires transitive org.apache.logging.log4j;
 	requires transitive org.apache.commons.io;
 //	requires org.apache.commons.lang3;

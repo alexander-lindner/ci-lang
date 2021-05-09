@@ -1,5 +1,6 @@
 package org.alindner.cish.lang;
 
+import org.alindner.cish.extension.annotations.CishExtension;
 import org.alindner.cish.lang.file.FileExecutor;
 import org.apache.commons.io.FileUtils;
 
@@ -26,6 +27,7 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
  *
  * @author alindner
  */
+@CishExtension("0.2")
 public class IO {
 	/**
 	 * creates a temporary directory. The directory gets delete on jvm shutdown or if this fails on os shutdown

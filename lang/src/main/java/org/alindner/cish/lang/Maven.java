@@ -1,11 +1,14 @@
 package org.alindner.cish.lang;
 
 import lombok.extern.log4j.Log4j2;
+import org.alindner.cish.extension.annotations.CishExtension;
 
 /**
  * @author alindner
  */
 @Log4j2
+@CishExtension("0.2")
+//@MavenDependency(value = "org.apache.maven.shared", name = "maven-invoker", version = "3.1.0")
 public class Maven {
 //	final static File cacheRepository = new File(".cish/cache/mvn/local_repository");
 //	static {

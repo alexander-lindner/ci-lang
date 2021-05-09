@@ -1,5 +1,7 @@
 package org.alindner.cish.lang;
 
+import org.alindner.cish.extension.annotations.CishExtension;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -21,6 +23,7 @@ import static java.nio.file.StandardOpenOption.CREATE;
  *
  * @see File
  */
+@CishExtension("0.2")
 public class CiFile extends File {
 	private static final long serialVersionUID = -6152126533186196523L;
 

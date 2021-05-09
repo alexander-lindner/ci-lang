@@ -2,6 +2,7 @@ package org.alindner.cish.lang;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.alindner.cish.extension.annotations.CishExtension;
 
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -15,6 +16,7 @@ import java.util.Map;
  * @author alindner
  * @since 0.3.2
  */
+@CishExtension("0.2")
 public class Parameter {
 	/**
 	 * the parameter like -version

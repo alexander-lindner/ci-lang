@@ -6,3 +6,4 @@
 stars = Github::getStars("lsds/sgx-lkl")
 Console::print(stars)
 
+Maven::clean()

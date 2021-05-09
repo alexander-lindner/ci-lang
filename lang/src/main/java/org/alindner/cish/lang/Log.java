@@ -1,10 +1,12 @@
 package org.alindner.cish.lang;
 
 import lombok.extern.log4j.Log4j2;
+import org.alindner.cish.extension.annotations.CishExtension;
 
 /**
  * the log and print class of all included classes
  */
+@CishExtension("0.2")
 @Log4j2
 public class Log {
 	static boolean stopOnError = true;

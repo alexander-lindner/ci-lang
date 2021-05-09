@@ -2,6 +2,7 @@ package org.alindner.cish.compiler.postcompiler.extension;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.ToString;
 import org.alindner.cish.extension.Version;
 
 import java.nio.file.Path;
@@ -15,6 +16,7 @@ import java.util.List;
  */
 @Builder
 @Data
+@ToString
 public class FileInfo {
 	Path                       file;
 	String                     name;

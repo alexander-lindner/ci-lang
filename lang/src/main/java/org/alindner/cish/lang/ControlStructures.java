@@ -1,5 +1,6 @@
 package org.alindner.cish.lang;
 
+import org.alindner.cish.extension.annotations.CishExtension;
 import org.alindner.cish.lang.datatype.Basic;
 import org.alindner.cish.lang.datatype.lambdas.EachLambda;
 import org.alindner.cish.lang.structures.ControlBodySimple;
@@ -7,6 +8,7 @@ import org.alindner.cish.lang.structures.ControlBodySimple;
 /**
  * Wraps java control structures like if to an object
  */
+@CishExtension("0.2")
 public class ControlStructures {
 	/**
 	 * for each loop

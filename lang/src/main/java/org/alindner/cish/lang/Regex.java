@@ -1,6 +1,7 @@
 package org.alindner.cish.lang;
 
 import lombok.Data;
+import org.alindner.cish.extension.annotations.CishExtension;
 
 import java.util.StringJoiner;
 import java.util.regex.Matcher;
@@ -12,6 +13,7 @@ import java.util.regex.Pattern;
  * @author alindner
  * @since 0.3.5
  */
+@CishExtension("0.2")
 @Data
 public class Regex {
 	private final Pattern regex;

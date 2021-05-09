@@ -1,5 +1,7 @@
 package org.alindner.cish.lang;
 
+import org.alindner.cish.extension.annotations.CishExtension;
+
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -8,8 +10,9 @@ import java.net.URL;
 import java.net.URLClassLoader;
 
 /**
- * A collection of utils function which gets internal used
+ * A collection of utils function which gets internal used todo is this still needed?
  */
+@CishExtension("0.2")
 public class CishUtils {
 	/**
 	 * include and execute another cish file
@@ -17,11 +20,11 @@ public class CishUtils {
 	 * @param base cache base path
 	 * @param path relative path
 	 *
-	 * @throws MalformedURLException exception
-	 * @throws ClassNotFoundException exception
-	 * @throws NoSuchMethodException exception
+	 * @throws MalformedURLException     exception
+	 * @throws ClassNotFoundException    exception
+	 * @throws NoSuchMethodException     exception
 	 * @throws InvocationTargetException exception
-	 * @throws IllegalAccessException exception
+	 * @throws IllegalAccessException    exception
 	 */
 	public static void require(final String base, final String path) throws MalformedURLException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 		String str = path.replaceAll("/", ".");

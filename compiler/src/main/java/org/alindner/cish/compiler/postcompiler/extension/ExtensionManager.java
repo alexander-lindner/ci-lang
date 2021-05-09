@@ -2,14 +2,12 @@ package org.alindner.cish.compiler.postcompiler.extension;
 
 import lombok.extern.log4j.Log4j2;
 import org.alindner.cish.compiler.postcompiler.extension.worker.DependencyWorker;
+import org.alindner.cish.compiler.utils.CishPath;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 /**
@@ -21,14 +19,15 @@ import java.util.stream.Collectors;
 @Log4j2
 public final class ExtensionManager {
 	private final static List<Path>            directories               = List.of(
-			Path.of("~/.cish/extensions/"),
-			Path.of("/var/lib/cish/extensions/"),
+			CishPath.ofExtensions("."),
+			Path.of("/usr/lib/cish/extensions/"),
 			Path.of("./.cish/extensions/")
 	);
 	private final        Deque<FileInfo>       queue                     = new ArrayDeque<>();
 	private final        Map<FileInfo, String> listOfGlobalLoadedClasses = new HashMap<>();
 	private final        Deque<FileInfo>       loaded                    = new ArrayDeque<>();
 	private final        AssetsManager         assetsManager;
+	private              boolean               notRun                    = false;
 
 	/**
 	 * constructor
@@ -46,32 +45,34 @@ public final class ExtensionManager {
 	 * org.alindner.cish.extension.annotations.CishDependency}.
 	 */
 	public void scanForExtensions() {
-		final ExecutorService es = Executors.newFixedThreadPool(10);
-		ExtensionManager.directories.stream()
-		                            .parallel()
-		                            .filter(Files::exists)
-		                            .filter(Files::isDirectory)
-		                            .flatMap(extensionsDir -> {
-			                            try {
-				                            return Files.walk(extensionsDir);
-			                            } catch (final IOException e) {
-				                            ExtensionManager.log.error(String.format("Couldn't read in jars from directory %s", extensionsDir), e);
-			                            }
-			                            return null;
-		                            })
-		                            .filter(Objects::nonNull)
-		                            .filter(path -> path.getFileName().toString().endsWith(".jar"))
-		                            .map(file -> es.submit(new DependencyWorker(file)))
-		                            .forEach(e -> {
-			                            try {
-				                            this.queue.addAll(e.get().getDependenciesList()); //todo using executor service in parallel stream is maybe not the best idea...
-			                            } catch (final InterruptedException | ExecutionException interruptedException) {
-				                            ExtensionManager.log.error("Couldn't load extension {}. Thread was interrupted.", () -> interruptedException);
-				                            ExtensionManager.log.error(e);
-			                            } finally {
-				                            es.shutdown();
-			                            }
-		                            });
+		if (!this.notRun) {
+			ExtensionManager.directories.stream()
+			                            .parallel()
+			                            .filter(Files::exists)
+			                            .filter(Files::isDirectory)
+			                            .flatMap(extensionsDir -> {
+				                            try {
+					                            return Files.walk(extensionsDir);
+				                            } catch (final IOException e) {
+					                            ExtensionManager.log.error(String.format("Couldn't read in jars from directory %s", extensionsDir), e);
+				                            }
+				                            return null;
+			                            })
+			                            .filter(Objects::nonNull)
+			                            .filter(path -> path.getFileName().toString().endsWith(".jar"))
+			                            .map(DependencyWorker::new)
+			                            .map(DependencyWorker::call)
+			                            .forEach(e -> {
+				                            try {
+					                            this.queue.addAll(e.getDependenciesList());
+				                            } catch (final Exception interruptedException) {
+					                            ExtensionManager.log.error("Couldn't load extension {}. Thread was interrupted.", () -> interruptedException);
+					                            ExtensionManager.log.error(e);
+				                            }
+			                            });
+			this.notRun = true;
+		}
+
 	}
 
 	/**
@@ -81,6 +82,7 @@ public final class ExtensionManager {
 	 */
 	public void processFoundExtensions() {
 		this.queue.forEach(this::processFoundExtension);
+		this.queue.clear();
 	}
 
 	/**

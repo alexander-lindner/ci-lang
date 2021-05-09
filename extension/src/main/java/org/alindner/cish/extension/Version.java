@@ -118,4 +118,9 @@ public class Version implements Comparable<Version> {
 		}
 		return false;
 	}
+
+	@Override
+	public String toString() {
+		return this.get();
+	}
 }

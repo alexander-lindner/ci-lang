@@ -134,7 +134,7 @@ String Root() :
 	[<EOF>]
 	{
         if(this.renderClass) {
-            return "import java.util.*;import java.nio.file.*; import org.alindner.cish.lang.*; import org.alindner.cish.lang.functions.predicate.*;   public class Main { public static void main(final Path file, final List<String> simpleParameters, final List<String> argsList, final Map<String, String> parameters) throws Exception { Parameter.params = simpleParameters; Parameter.simpleArgs = argsList; Parameter.extendedParams = parameters; Parameter.script = file;"+mainContent.toString()+"}}";
+            return "import java.util.*;import java.nio.file.*; import org.alindner.cish.lang.functions.predicate.*;   public class Main { public static void main(final Path _file, final List<String> _simpleParameters, final List<String> _argsList, final Map<String, String> _parameters) throws Exception { Parameter.params = _simpleParameters; Parameter.simpleArgs = _argsList; Parameter.extendedParams = _parameters; Parameter.script = _file;"+mainContent.toString()+"}}";
         } else {
         	return mainContent.toString();
         }
@@ -195,7 +195,8 @@ String load():
             {
                 require.add(str);
                 Path b = CishPath.getCompileDirOfShellScript(base,Path.of(str));
-                str="CishUtils.require(\""+base.toAbsolutePath().toString()+"\",\""+b.toAbsolutePath().toString().replaceAll(base.toAbsolutePath().toString(),"")+"\");";
+              //  str="CishUtils.require(\""+base.toAbsolutePath().toString()+"\",\""+b.toAbsolutePath().toString().replaceAll(base.toAbsolutePath().toString(),"")+"\");";
+                str=b.getFileName()+".Main.main(_file, _simpleParameters, _argsList, _parameters);\n";
             }
             <RIGHT_PAREN>
         )

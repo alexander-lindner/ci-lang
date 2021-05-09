@@ -11,9 +11,7 @@ import org.alindner.cish.compiler.precompiler.jj.ParseException;
 import org.alindner.cish.compiler.utils.Utils;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -27,49 +25,36 @@ import java.util.regex.Matcher;
 @Log4j2
 @Getter
 public class Compiler {
-
-	final         ExtensionManager    manager;
-	private final Path                cishFile;
+	private final ExtensionManager    manager;
 	private final boolean             debug;
-	private final Map<String, String> javaContent = new TreeMap<>();
-	private final List<String>        imports     = new ArrayList<>();
-	private final List<String>        loads       = new ArrayList<>();
-	private final List<String>        requires    = new ArrayList<>();
-	private final Map<String, String> bash        = new TreeMap<>();
-	private final boolean             pkg;
+	private final Map<String, String> bash = new TreeMap<>();
 	private final PostCompiler        postCompiler;
-	private       String              content;
+	private final ScriptMetaInfo      script;
+	private final ScriptMetaInfo      currentScript;
+
 
 	public Compiler(final boolean debug, final Path cishFile) {
-		this.cishFile = cishFile.toAbsolutePath().normalize();
 		this.debug = debug;
-		this.pkg = false;
 		this.manager = new ExtensionManager(cishFile);
-
-		this.postCompiler = new PostCompiler(this.cishFile, this.manager);
+		this.script = new ScriptMetaInfo(cishFile, "main");
+		this.currentScript = this.script;
+		this.postCompiler = new PostCompiler(this.manager, this.currentScript);
 	}
-
-	public Compiler(final boolean debug, final Path cishFile, final Path subScript, final boolean addPackage) { //todo fix
-		this.cishFile = subScript.toAbsolutePath().normalize();
-		this.debug = debug;
-		this.pkg = addPackage;
-		this.manager = new ExtensionManager(subScript);
-		this.postCompiler = new PostCompiler(subScript, this.manager);
-	}
-
 
 	/**
-	 * read in the file to a variable
+	 * Constructor with a sub script
 	 *
-	 * @return instance
+	 * @param debug      debug
+	 * @param rootScript the script manager object
+	 * @param subScript  path to the current sub script
+	 * @param manager    extension manager
 	 */
-	private Compiler loadScriptToMemory() {
-		try {
-			this.content = Files.readString(this.cishFile);
-		} catch (final IOException e) {
-			Compiler.log.error(String.format("Error reading in %s to memory.", this.cishFile.toAbsolutePath()), e);
-		}
-		return this;
+	private Compiler(final boolean debug, final ScriptMetaInfo rootScript, final Path subScript, final ExtensionManager manager) {
+		this.debug = debug;
+		this.manager = manager;
+		this.script = rootScript;
+		this.currentScript = rootScript.addSubScript(subScript);
+		this.postCompiler = new PostCompiler(this.manager, this.currentScript);
 	}
 
 
@@ -83,24 +68,30 @@ public class Compiler {
 	 * @throws ParseException a syntax error happened
 	 */
 	public Compiler compileCish(final String s) throws ParseException {
-		final CishCompiler c = new CishCompiler(this.debug, this.cishFile).compile(s);
-		final String       p = this.pkg ? "main.p" + Utils.hash(this.cishFile.toAbsolutePath().getFileName().toString()) : "main";
-		this.javaContent.put(
+		final CishCompiler c = new CishCompiler(this.debug, this.currentScript.getScript()).compile(s);
+		this.currentScript.getJavaContent().put(
 				"Main",
-				String.format("package %s;\n%s", p, c.getContent())
+				String.format("package %s;\n%s", this.currentScript.getPkg(), c.getContent())
 		);
 		c.getJavaClasses().forEach(cl -> {
 			final Matcher matcher = Props.regexClassPattern.matcher(cl.replaceAll("\n", ""));
 			while (matcher.find()) {
-				this.javaContent.put(matcher.group(2), this.pkg ? String.format("package p%s;\n%s", Utils.hash(this.cishFile.toAbsolutePath().getFileName().toString()), cl) : cl);
+				this.currentScript.getJavaContent().put(
+						matcher.group(2),
+						this.currentScript.getPkg() != null ? String.format(
+								"package p%s;\n%s",
+								Utils.hash(this.currentScript.getScript().toAbsolutePath().getFileName().toString()),
+								cl
+						) : cl
+						//todo
+				);
 			}
 		});
-		this.imports.addAll(c.getImports());
-		this.loads.addAll(c.getLoads());
-		this.requires.addAll(c.getRequires());
+		this.currentScript.getImports().addAll(c.getImports());
+		this.currentScript.getLoads().addAll(c.getLoads());
+		this.currentScript.getRequires().addAll(c.getRequires());
 		this.bash.putAll(c.getBash());
-		this.requires.stream().map(Path::of).forEach(this::compileASubScript);
-
+		this.currentScript.getRequiresAsPaths().forEach(this::compileASubScript);
 		return this;
 	}
 
@@ -111,35 +102,34 @@ public class Compiler {
 	 */
 	private void compileASubScript(final Path f) {
 		try {
-			new Compiler(this.debug, this.cishFile, f, true)
-					.loadScriptToMemory()
-					.compileCish(this.content)
-			//.compileJava(Collections.emptyList()) //todo
-			;
-		} catch (final ParseException e) {
+			new Compiler(this.debug, this.currentScript, f, this.manager).compile();
+		} catch (final CishException e) {
 			Compiler.log.error("Couldn't parse subscript: {}", () -> f);
 			Compiler.log.error(e);
 		}
 	}
 
-
+	/**
+	 * compile the given script
+	 *
+	 * @throws CishException Compilation fails
+	 */
 	public void compile() throws CishException {
-		Compiler.log.debug("Reading file.");
-		this.loadScriptToMemory();
 		Compiler.log.debug("Compile the .cish script to java plain text");
 		try {
-			this.compileCish(this.content);
+			this.compileCish(this.currentScript.getContent());
 		} catch (final ParseException e) {
 			throw new CishSyntaxError("The provided script contains a syntax error.", e);
 		}
 		this.manager.scanForExtensions();
 		this.manager.processFoundExtensions();
 		try {
-			this.postCompiler.compileJava(this.manager.getImports(), this.javaContent);
+			this.postCompiler.compileJava(this.manager.getImports());
 		} catch (final IOException e) {
-			e.printStackTrace(); //todo
+			throw new CishException("Couldn't compile java code. Maybe a bug?", e);
 		}
 		this.manager.store();
+
 	}
 
 	/**

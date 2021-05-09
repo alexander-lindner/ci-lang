@@ -3,7 +3,9 @@ package org.alindner.cish.compiler.postcompiler;
 
 import lombok.extern.log4j.Log4j2;
 import org.alindner.cish.compiler.Props;
+import org.alindner.cish.compiler.ScriptMetaInfo;
 import org.alindner.cish.compiler.exceptions.CishCompileException;
+import org.alindner.cish.compiler.exceptions.CishException;
 import org.alindner.cish.compiler.postcompiler.extension.ExtensionManager;
 import org.alindner.cish.compiler.utils.CishPath;
 import org.alindner.cish.compiler.utils.Utils;
@@ -31,19 +33,13 @@ import java.util.stream.Collectors;
  */
 @Log4j2
 public class PostCompiler {
-	private final List<Path>          listOfModules = new ArrayList<>();
-	private final Map<String, String> javaContent   = new TreeMap<>();
-	private final List<String>        imports       = new ArrayList<>();
-	private final List<String>        loads         = new ArrayList<>(); //todo
-	private final List<String>        requires      = new ArrayList<>(); //todo
-	private final Map<String, String> bash          = new TreeMap<>(); //todo
-	private final Path                cishScript;
-	private final ModuleManager       moduleManager;
-	private       Path                cishFile;
+	private final List<Path>     listOfModules = new ArrayList<>();
+	private final ModuleManager  moduleManager;
+	private final ScriptMetaInfo script;
 
-	public PostCompiler(final Path cishScript, final ExtensionManager manager) {
-		this.cishScript = cishScript;
-		this.moduleManager = new ModuleManager(cishScript, manager);
+	public PostCompiler(final ExtensionManager manager, final ScriptMetaInfo script) {
+		this.script = script;
+		this.moduleManager = new ModuleManager(script.getScript(), manager);
 	}
 
 	/**
@@ -53,18 +49,17 @@ public class PostCompiler {
 	 *
 	 * @return class name
 	 */
-	static List<String> fileToClass(final Path file) {
+	static List<String> fileToClass(final Path file) throws CishException {
 		switch (FilenameUtils.getExtension(file.toString())) {
 			case "java":
 				final List<String> list = new ArrayList<>();
 				try {
 					final Matcher matcher = Props.regexClassPattern.matcher(Files.readString(file));
-
 					while (matcher.find()) {
 						list.add(matcher.group(2));
 					}
 				} catch (final IOException e) {
-					e.printStackTrace(); //todo
+					throw new CishException("Couldn't extract filename from java file.", e);
 				}
 				return list;
 			case "jar":
@@ -73,21 +68,19 @@ public class PostCompiler {
 				            .filter(s -> !s.contains("$"))
 				            .collect(Collectors.toList());
 		}
-		return null;
+		return List.of();
 	}
 
 	/**
 	 * It compiles the given java file, which represents the java version of the origin cish file
 	 *
-	 * @param cishFile   cish source file
 	 * @param moduleList list of modules
 	 *
 	 * @throws IOException          error when copying files.
 	 * @throws CishCompileException error when compiling the java file
 	 * @throws URISyntaxException   something strange happened when trying to access the executed file itself
 	 */
-	public void compile(final Path cishFile, final List<Path> moduleList) throws IOException, URISyntaxException, CishCompileException {
-		this.cishFile = cishFile;
+	public void compile(final List<Path> moduleList) throws IOException, URISyntaxException, CishCompileException {
 		this.listOfModules.addAll(moduleList);
 
 		final javax.tools.JavaCompiler            compiler    = ToolProvider.getSystemJavaCompiler();
@@ -96,11 +89,11 @@ public class PostCompiler {
 
 		fileManager.setLocation(
 				StandardLocation.CLASS_PATH,
-				Collections.singletonList(CishPath.modulePath(cishFile).toFile())
+				Collections.singletonList(CishPath.modulePath(this.script.getScript()).toFile())
 		);
 
-		if (Files.notExists(CishPath.outPath(cishFile))) {
-			Files.createDirectories(CishPath.outPath(cishFile));
+		if (Files.notExists(CishPath.outPath(this.script.getRootScript()))) {
+			Files.createDirectories(CishPath.outPath(this.script.getRootScript()));
 		}
 		final String modulePathString = this.listOfModules.stream().map(path -> path.toAbsolutePath().toString()).collect(Collectors.joining(":"));
 		final javax.tools.JavaCompiler.CompilationTask compilerTask = compiler.getTask(
@@ -109,11 +102,11 @@ public class PostCompiler {
 				diagnostics,
 				Arrays.asList(
 						"-d",
-						CishPath.outPath(cishFile).toString(),
+						CishPath.outPath(this.script.getScript()).toString(),
 						"-p",
 						modulePathString,
 						"--module-source-path",
-						CishPath.ofCishFile(cishFile).toString(),
+						CishPath.ofCishFile(this.script.getScript()).toString(),
 						"--module",
 						"cishResult"
 				),
@@ -136,11 +129,10 @@ public class PostCompiler {
 	 */
 	public void run(final List<String> simpleParameters, final List<String> argsList, final Map<String, String> parameters) {
 		final ModuleLayer layer = this.moduleManager.getLayer();
-
 		try {
-			final Class<?> cls  = Class.forName("main.Main", true, layer.findLoader("cishResult"));
+			final Class<?> cls  = Class.forName(this.script.getPkg() + ".Main", true, layer.findLoader("cishResult"));
 			final Method   meth = cls.getMethod("main", Path.class, List.class, List.class, Map.class);
-			meth.invoke(null, this.cishFile, simpleParameters, argsList, parameters);
+			meth.invoke(null, this.script.getScript(), simpleParameters, argsList, parameters);
 		} catch (final ClassNotFoundException e) {
 			PostCompiler.log.fatal("Couldn't found the main class. This may be a bug.", e);
 		} catch (final NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
@@ -151,34 +143,34 @@ public class PostCompiler {
 	/**
 	 * the main method for compiling java code to byte code
 	 *
-	 * @param imports     class which should be imported
-	 * @param javaContent the java content
+	 * @param imports class which should be imported
 	 *
 	 * @throws IOException when compiling fails
 	 */
-	public void compileJava(final List<String> imports, final Map<String, String> javaContent) throws IOException {
-		this.javaContent.putAll(javaContent);
+	public void compileJava(final List<String> imports) throws IOException {
 		this.putJavaContentToFile();
 		this.putBashContentToFile();
-		this.imports.addAll(imports);
+		this.script.getImports().addAll(imports);
 		this.prependsImports();
 
 		final ArrayList<Path> listOfAllScripts = new ArrayList<>();
-		listOfAllScripts.add(this.cishScript);
+		listOfAllScripts.add(this.script.getScript());
 		listOfAllScripts.addAll(
-				this.requires.stream()
-				             .map(Path::of)
-				             .collect(Collectors.toList())
+				this.script.getRequires().stream()
+				           .map(Path::of)
+				           .collect(Collectors.toList())
 		);
-		listOfAllScripts.stream()
-		                .map(CishPath::getCompileDirOfShellScript)
-		                .forEach(f -> {
-			                try {
-				                this.compile(this.cishScript, this.moduleManager.getModulePathsForCompiler());
-			                } catch (final Exception e) {
-				                PostCompiler.log.error("Couldn't compile file " + this.cishScript, e);
-			                }
-		                });
+		if (this.script.isRoot()) {
+			listOfAllScripts.stream()
+			                .map(CishPath::getCompileDirOfShellScript)
+			                .forEach(f -> {
+				                try {
+					                this.compile(this.moduleManager.getModulePathsForCompiler());
+				                } catch (final Exception e) {
+					                PostCompiler.log.error("Couldn't compile file " + this.script.getScript(), e);
+				                }
+			                });
+		}
 	}
 
 	/**
@@ -190,63 +182,68 @@ public class PostCompiler {
 	 */
 	private void prependsImports() throws IOException {
 		final AtomicReference<String> content = new AtomicReference<>("");
-		final Map<String, Path> l = this.loads
-				.stream()
-				.map(s -> {
-					final URI      fileName = URI.create(s);
-					final String[] tmp      = fileName.getPath().split("/");
-					final Path     target   = CishPath.ofCishFile(this.cishFile).resolve(tmp[tmp.length - 1]);
+		final Map<String, Path> l = this.script.getLoads()
+		                                       .stream()
+		                                       .map(s -> {
+			                                       final URI      fileName = URI.create(s);
+			                                       final String[] tmp      = fileName.getPath().split("/");
+			                                       final Path     target   = CishPath.ofCishFile(this.script.getRootScript()).resolve(tmp[tmp.length - 1]);
 
-					if (fileName.getScheme().equals("http") || fileName.getScheme().equals("https")) {
-						try {
+			                                       if (fileName.getScheme().equals("http") || fileName.getScheme().equals("https")) {
+				                                       try {
 //							Files.copy(new URL(s), target);
-							PostCompiler.log.debug("todo");
-							throw new IOException();
-						} catch (final IOException e) {
-							PostCompiler.log.error("Failed creating and downloading a url form string", e);
-						}
-					} else {
-						try {
-							Files.copy(Path.of(fileName), target);
-						} catch (final IOException e) {
-							PostCompiler.log.error("Failed copying the file to the cached target dir", e);
-						}
-					}
-					if (Files.exists(target)) {
-						return Map.ofEntries(Map.entry(s, target));
-					} else {
-						return new HashMap<String, Path>();
-					}
-				})
-				.flatMap(stringFileMap -> stringFileMap.entrySet().stream())
-				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-		this.imports.stream()
-		            .filter(Objects::nonNull)
-		            .map(s -> {
-			            final List<String> list;
-			            if (s.startsWith("*.")) {
-				            final Path f = l.get(s.substring(2));
-				            list = PostCompiler.fileToClass(f);
-			            } else {
-				            list = List.of(s);
-			            }
-			            return list;
-		            })
-		            .filter(Objects::nonNull)
-		            .flatMap(Collection::stream)
-		            .forEach(s -> content.set(String.format("%s\n import %s;", content.get(), s)));
+					                                       PostCompiler.log.debug("todo");
+					                                       throw new IOException();
+				                                       } catch (final IOException e) {
+					                                       PostCompiler.log.error("Failed creating and downloading a url form string", e);
+				                                       }
+			                                       } else {
+				                                       try {
+					                                       Files.copy(Path.of(fileName), target);
+				                                       } catch (final IOException e) {
+					                                       PostCompiler.log.error("Failed copying the file to the cached target dir", e);
+				                                       }
+			                                       }
+			                                       if (Files.exists(target)) {
+				                                       return Map.ofEntries(Map.entry(s, target));
+			                                       } else {
+				                                       return new HashMap<String, Path>();
+			                                       }
+		                                       })
+		                                       .flatMap(stringFileMap -> stringFileMap.entrySet().stream())
+		                                       .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+		this.script.getImports()
+		           .stream()
+		           .filter(Objects::nonNull)
+		           .map(s -> {
+			           final List<String> list = new ArrayList<>();
+			           if (s.startsWith("*.")) {
+				           final Path f = l.get(s.substring(2));
+				           try {
+					           list.addAll(PostCompiler.fileToClass(f));
+				           } catch (final CishException e) {
+					           PostCompiler.log.error(e);
+				           }
+			           } else {
+				           list.addAll(List.of(s));
+			           }
+			           return list;
+		           })
+		           .flatMap(Collection::stream)
+		           .filter(Objects::nonNull)
+		           .forEach(s -> content.set(String.format("%s\n import %s;", content.get(), s)));
 
-		final List<String> tmpContent = Files.readAllLines(CishPath.mainFile(this.cishScript));
+		final List<String> tmpContent = Files.readAllLines(this.script.getJavaFile());
 		tmpContent.add(1, content.get());
 
-		Files.write(CishPath.mainFile(this.cishScript), tmpContent);
+		Files.write(this.script.getJavaFile(), tmpContent);
 		Files.write(
-				CishPath.moduleInfoFile(this.cishScript),
+				this.script.getModuleInfo(),
 				String.format(
 						"module cishResult {%s\n\texports main;\n}",
 						this.moduleManager.getRequireString()
 				).getBytes()
-		);
+		); //todo gets overridden with subscripts. Content should not change
 	}
 
 	/**
@@ -255,8 +252,8 @@ public class PostCompiler {
 	 * @throws IOException write error
 	 */
 	private void putJavaContentToFile() throws IOException {
-		for (final Map.Entry<String, String> entry : this.javaContent.entrySet()) {
-			final Path currentFile = CishPath.mainPackage(this.cishScript).resolve(entry.getKey() + ".java");
+		for (final Map.Entry<String, String> entry : this.script.getJavaContent().entrySet()) {
+			final Path currentFile = CishPath.ofPackage(this.script.getRootScript(), this.script.getPkg()).resolve(entry.getKey() + ".java");
 			Files.write(currentFile, entry.getValue().getBytes(StandardCharsets.UTF_8));
 		}
 	}
@@ -267,13 +264,13 @@ public class PostCompiler {
 	 * @throws IOException write error
 	 */
 	private void putBashContentToFile() throws IOException {
-		for (final Map.Entry<String, String> entry : this.bash.entrySet()) {
-			if (Files.isDirectory(CishPath.ofCishFile(this.cishFile))) {
-				Files.deleteIfExists(CishPath.ofCishFile(this.cishFile));
-				Files.createDirectory(CishPath.ofCishFile(this.cishFile));
-			}
-			final Path currentFile = CishPath.ofCishFile(this.cishFile).resolve(entry.getKey() + ".sh");
-			Files.write(currentFile, ("#!/bin/bash \n" + entry.getValue()).getBytes(StandardCharsets.UTF_8));
-		}
+//		for (final Map.Entry<String, String> entry : this.bash.entrySet()) {
+//			if (Files.isDirectory(CishPath.ofCishFile(this.script.getScript()))) {
+//				Files.deleteIfExists(CishPath.ofCishFile(this.script.getScript()));
+//				Files.createDirectory(CishPath.ofCishFile(this.script.getScript()));
+//			}
+//			final Path currentFile = CishPath.ofCishFile(this.script.getScript()).resolve(entry.getKey() + ".sh");
+//			Files.write(currentFile, ("#!/bin/bash \n" + entry.getValue()).getBytes(StandardCharsets.UTF_8));
+//		}
 	}
 }

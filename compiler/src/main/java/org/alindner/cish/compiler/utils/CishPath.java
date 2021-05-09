@@ -68,16 +68,7 @@ public class CishPath {
 	}
 
 	public static Path mainPackage(final Path cishFile) {
-		final Path main = CishPath.modulePath(cishFile).resolve("main");
-		if (Files.notExists(main)) {
-			try {
-				Files.createDirectories(main);
-			} catch (final IOException e) {
-				CishPath.log.fatal("Couldn't create directory.", e);
-				throw new Error("Unable to create the directory inside the home directory", e);
-			}
-		}
-		return main;
+		return CishPath.ofPackage(cishFile, "main");
 	}
 
 	public static Path mainFile(final Path cishFile) {
@@ -122,5 +113,18 @@ public class CishPath {
 			throw new Error(e);
 		}
 		return sourceFile;
+	}
+
+	public static Path ofPackage(final Path cishFile, final String pkg) {
+		final Path main = CishPath.modulePath(cishFile).resolve(pkg);
+		if (Files.notExists(main)) {
+			try {
+				Files.createDirectories(main);
+			} catch (final IOException e) {
+				CishPath.log.fatal("Couldn't create directory.", e);
+				throw new Error("Unable to create the directory inside the home directory", e);
+			}
+		}
+		return main;
 	}
 }

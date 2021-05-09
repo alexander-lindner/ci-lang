@@ -1,5 +1,6 @@
 package org.alindner.cish.lang;
 
+import org.alindner.cish.extension.annotations.CishExtension;
 import org.alindner.cish.lang.structures.ThenControlStructure;
 import org.alindner.cish.lang.structures.ThreadAsyncCallback;
 
@@ -10,6 +11,7 @@ import java.util.Arrays;
  *
  * @author alindner
  */
+@CishExtension("0.2")
 public class Thread {
 	/**
 	 * run code in a simple, asynchronous way

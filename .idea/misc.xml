@@ -8,6 +8,7 @@
         <option value="$PROJECT_DIR$/compiler/pom.xml" />
         <option value="$PROJECT_DIR$/demoPlugin/pom.xml" />
         <option value="$PROJECT_DIR$/demoExtension/pom.xml" />
+        <option value="$PROJECT_DIR$/examples/demoExtension/pom.xml" />
       </list>
     </option>
   </component>

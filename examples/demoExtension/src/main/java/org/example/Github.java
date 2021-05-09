@@ -11,11 +11,8 @@ import java.net.http.HttpResponse;
 
 
 @CishExtension("0.2.6")
-//@CishExtension(value="0.2.6", provides = {"com.google.gson.JsonParser"})
 @MavenDependency(value = "com.google.code.gson", name = "gson", version = "2.8.6")
 public class Github {
-
-	@MavenDependency(value = "com.google.code.gson", name = "gson", version = "2.8.6")
 	public static Integer getStars(final String repoName) {
 		try {
 			final var request = HttpRequest.newBuilder(
