@@ -1,0 +1,14 @@
+#!/bin/cish
+
+
+```java
+class Cool {
+    public static void main(String... args){
+        System.out.println("Very cool");
+    }
+}
+
+```
+Cool::main("");
+require("java2.cish");
+//Cool2::main("");

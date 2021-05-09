@@ -8,7 +8,6 @@ import org.alindner.cish.compiler.postcompiler.PostCompiler;
 import org.alindner.cish.compiler.postcompiler.extension.ExtensionManager;
 import org.alindner.cish.compiler.precompiler.CishCompiler;
 import org.alindner.cish.compiler.precompiler.jj.ParseException;
-import org.alindner.cish.compiler.utils.Utils;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -78,11 +77,11 @@ public class Compiler {
 			while (matcher.find()) {
 				this.currentScript.getJavaContent().put(
 						matcher.group(2),
-						this.currentScript.getPkg() != null ? String.format(
-								"package p%s;\n%s",
-								Utils.hash(this.currentScript.getScript().toAbsolutePath().getFileName().toString()),
+						String.format(
+								"package %s;\n%s",
+								this.currentScript.getPkg(),
 								cl
-						) : cl
+						)
 						//todo
 				);
 			}

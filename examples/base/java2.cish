@@ -1,0 +1,22 @@
+#!/bin/cish
+
+
+```java
+class Cool2 {
+    public static void main(String... args){
+        System.out.println("Very cool2");
+    }
+}
+
+```
+Cool2::main("");
+
+```java
+class Cool {
+    public static void main(String... args){
+        System.out.println("Very cool");
+    }
+}
+
+```
+Cool::main("");
