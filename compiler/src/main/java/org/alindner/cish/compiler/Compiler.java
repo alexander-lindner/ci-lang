@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.regex.Matcher;
 
 /**
@@ -24,12 +23,12 @@ import java.util.regex.Matcher;
 @Log4j2
 @Getter
 public class Compiler {
-	private final ExtensionManager    manager;
-	private final boolean             debug;
-	private final Map<String, String> bash = new TreeMap<>();
-	private final PostCompiler        postCompiler;
-	private final ScriptMetaInfo      script;
-	private final ScriptMetaInfo      currentScript;
+	private final ExtensionManager manager;
+	private final boolean          debug;
+
+	private final PostCompiler   postCompiler;
+	private final ScriptMetaInfo script;
+	private final ScriptMetaInfo currentScript;
 
 
 	public Compiler(final boolean debug, final Path cishFile) {
@@ -67,7 +66,7 @@ public class Compiler {
 	 * @throws ParseException a syntax error happened
 	 */
 	public Compiler compileCish(final String s) throws ParseException {
-		final CishCompiler c = new CishCompiler(this.debug, this.currentScript.getScript()).compile(s);
+		final CishCompiler c = new CishCompiler(this.debug, this.currentScript).compile(s);
 		this.currentScript.getJavaContent().put(
 				"Main",
 				String.format("package %s;\n%s", this.currentScript.getPkg(), c.getContent())
@@ -89,7 +88,7 @@ public class Compiler {
 		this.currentScript.getImports().addAll(c.getImports());
 		this.currentScript.getLoads().addAll(c.getLoads());
 		this.currentScript.getRequires().addAll(c.getRequires());
-		this.bash.putAll(c.getBash());
+		this.currentScript.getBash().putAll(c.getBash());
 		this.currentScript.getRequiresAsPaths().forEach(this::compileASubScript);
 		return this;
 	}

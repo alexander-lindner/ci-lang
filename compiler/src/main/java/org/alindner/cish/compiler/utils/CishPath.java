@@ -54,6 +54,19 @@ public class CishPath {
 		return CishPath.baseCompiled.resolve(CishPath.getCompileDirOfShellScript(cishFile)).toAbsolutePath();
 	}
 
+	public static Path ofBashScript(final Path cishFile, final String bashName) {
+		final Path d = CishPath.ofCishFile(cishFile).resolve("bash");
+		if (!Files.isDirectory(d)) {
+			try {
+				Files.createDirectories(d);
+			} catch (final IOException e) {
+				CishPath.log.fatal("Couldn't create directory.", e);
+				throw new Error("Unable to create the directory inside the home directory", e);
+			}
+		}
+		return CishPath.ofCishFile(cishFile).resolve("bash").resolve(bashName);
+	}
+
 	public static Path modulePath(final Path cishFile) {
 		final Path mainPath = CishPath.ofCishFile(cishFile).resolve("cishResult");
 		if (Files.notExists(mainPath)) {

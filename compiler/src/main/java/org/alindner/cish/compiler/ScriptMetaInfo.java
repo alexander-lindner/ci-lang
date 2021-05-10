@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 @Log4j2
 public class ScriptMetaInfo implements Serializable {
 	private static final long                 serialVersionUID = 2983316659443518895L;
+	private final Map<String, String> bash = new TreeMap<>();
 	private final        Map<String, String>  javaContent      = new TreeMap<>();
 	private final        List<String>         imports          = new ArrayList<>();
 	private final        List<String>         loads            = new ArrayList<>();

@@ -1,6 +1,7 @@
 package org.alindner.cish.compiler.precompiler;
 
 import lombok.Getter;
+import org.alindner.cish.compiler.ScriptMetaInfo;
 import org.alindner.cish.compiler.precompiler.jj.ParseException;
 import org.alindner.cish.compiler.precompiler.jj.Parser;
 
@@ -17,12 +18,12 @@ import java.util.Map;
 @Getter
 public class CishCompiler {
 
-	private final boolean debug;
-	private final Path    cishFile;
-	private       String  content;
-	private       Parser  parser;
+	private final boolean        debug;
+	private final ScriptMetaInfo cishFile;
+	private       String         content;
+	private       Parser         parser;
 
-	public CishCompiler(final boolean debug, final Path cishFile) {
+	public CishCompiler(final boolean debug, final ScriptMetaInfo cishFile) {
 		this.debug = debug;
 		this.cishFile = cishFile;
 	}
@@ -35,7 +36,7 @@ public class CishCompiler {
 	 * @throws ParseException syntax error
 	 */
 	public CishCompiler compile(final Path file) throws ParseException, FileNotFoundException {
-		this.parser = new Parser(new FileInputStream(file.toFile()), false, this.cishFile); //todo base to cishFIle in Parser
+		this.parser = new Parser(new FileInputStream(file.toFile()), false, this.cishFile);
 		this.doCompile();
 		return this;
 	}
@@ -49,7 +50,7 @@ public class CishCompiler {
 	 * @throws ParseException syntax error
 	 */
 	public CishCompiler compile(final String content, final boolean renderClass) throws ParseException {
-		this.parser = new Parser(new StringReader(content), renderClass, this.cishFile);//todo base to cishFIle in Parser
+		this.parser = new Parser(new StringReader(content), renderClass, this.cishFile);
 		this.doCompile();
 		return this;
 	}
@@ -71,7 +72,7 @@ public class CishCompiler {
 	 * @throws ParseException syntax error
 	 */
 	public CishCompiler compile() throws ParseException {
-		this.parser = new Parser(System.in, false, this.cishFile); //todo base to cishFIle in Parser
+		this.parser = new Parser(System.in, false, this.cishFile);
 		this.doCompile();
 		return this;
 	}

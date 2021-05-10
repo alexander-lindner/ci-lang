@@ -259,18 +259,17 @@ public class PostCompiler {
 	}
 
 	/**
-	 * puts the used inline bash code to a file in the cache directory (classpath) todo doesn't work currently
+	 * puts the used inline bash code to a file in the cache directory (classpath)
 	 *
 	 * @throws IOException write error
 	 */
 	private void putBashContentToFile() throws IOException {
-//		for (final Map.Entry<String, String> entry : this.bash.entrySet()) {
-//			if (Files.isDirectory(CishPath.ofCishFile(this.script.getScript()))) {
-//				Files.deleteIfExists(CishPath.ofCishFile(this.script.getScript()));
-//				Files.createDirectory(CishPath.ofCishFile(this.script.getScript()));
-//			}
-//			final Path currentFile = CishPath.ofCishFile(this.script.getScript()).resolve(entry.getKey() + ".sh");
-//			Files.write(currentFile, ("#!/bin/bash \n" + entry.getValue()).getBytes(StandardCharsets.UTF_8));
-//		}
+		for (final Map.Entry<String, String> entry : this.script.getBash().entrySet()) {
+
+			Files.write(
+					CishPath.ofBashScript(this.script.getRootScript(), entry.getKey()),
+					String.format("#!/bin/bash \n%s", entry.getValue()).getBytes(StandardCharsets.UTF_8)
+			);
+		}
 	}
 }

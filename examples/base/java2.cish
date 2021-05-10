@@ -20,3 +20,10 @@ class Cool {
 
 ```
 Cool::main("");
+
+
+```bash
+echo "Hi"
+```
+
+`var p = Path.of(".");`

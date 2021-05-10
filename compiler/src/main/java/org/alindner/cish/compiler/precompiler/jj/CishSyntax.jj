@@ -14,6 +14,7 @@ import java.nio.file.*;
 import org.alindner.cish.compiler.precompiler.*;
 import org.alindner.cish.compiler.utils.Utils;
 import org.alindner.cish.compiler.utils.CishPath;
+import org.alindner.cish.compiler.ScriptMetaInfo;
 
 @lombok.extern.log4j.Log4j2
 public class Parser {
@@ -24,7 +25,7 @@ public class Parser {
 	private final List<String> require = new ArrayList<>();
 	private final Map<String, String> bash = new HashMap<>();
 	private boolean renderClass = true;
-	private Path base;
+	private ScriptMetaInfo script;
 
 	public List<String> getJavaLines(){
 		return this.java;
@@ -42,14 +43,14 @@ public class Parser {
 		return this.bash;
 	}
 
-	public Parser(InputStream is, boolean dummy,Path base) {
+	public Parser(InputStream is, boolean dummy, ScriptMetaInfo script) {
 		this(is, Charset.defaultCharset());
-		this.base = base;
+		this.script = script;
 	}
-	public Parser(Reader reader, boolean renderClass,Path base) {
+	public Parser(Reader reader, boolean renderClass, ScriptMetaInfo script) {
 		this(reader);
 		this.renderClass=renderClass;
-		this.base = base;
+		this.script = script;
 	}
 }
 PARSER_END(Parser)
@@ -177,7 +178,7 @@ String load():
             str=string()
             {
     try {
-    	CishCompiler c = new CishCompiler(log.isDebugEnabled(),base).compile(Utils.loadTextContent(str),false); //todo
+    	CishCompiler c = new CishCompiler(log.isDebugEnabled(),script).compile(Utils.loadTextContent(str),false); //todo
         str = c.getContent();
         imports.addAll(c.getImports());
         require.addAll(c.getRequires());
@@ -194,8 +195,7 @@ String load():
             str=string()
             {
                 require.add(str);
-                Path b = CishPath.getCompileDirOfShellScript(base,Path.of(str));
-              //  str="CishUtils.require(\""+base.toAbsolutePath().toString()+"\",\""+b.toAbsolutePath().toString().replaceAll(base.toAbsolutePath().toString(),"")+"\");";
+                Path b = CishPath.getCompileDirOfShellScript(script.getRootScript(),Path.of(str));
                 str=b.getFileName()+".Main.main(_file, _simpleParameters, _argsList, _parameters);\n";
             }
             <RIGHT_PAREN>
@@ -262,7 +262,7 @@ String heredoc():
 
     String fileName = Utils.hash(str);
     bash.put(fileName,str);
-    return String.format("Bash.runScript(\"%s\",\"%s\");",base.toAbsolutePath().toString(), fileName);
+    return String.format("Bash.runScript(\"%s\");",CishPath.ofBashScript(script.getRootScript(),fileName).toAbsolutePath().toString());
 
     return "";
 }
