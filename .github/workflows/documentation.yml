@@ -38,7 +38,7 @@ jobs:
           ./mvnw -DskipTests -Dversioning.disable=true -B clean package install javadoc:javadoc
 
       - name: Deploy doc "compiler"
-        uses: JamesIves/github-pages-deploy-action@4.1.1
+        uses: JamesIves/github-pages-deploy-action@4.1.2
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH: gh-pages
@@ -47,7 +47,7 @@ jobs:
           CLEAN: true
 
       - name: Deploy doc "interpreter"
-        uses: JamesIves/github-pages-deploy-action@4.1.1
+        uses: JamesIves/github-pages-deploy-action@4.1.2
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH: gh-pages
@@ -56,7 +56,7 @@ jobs:
           CLEAN: true
 
       - name: Deploy doc "lang"
-        uses: JamesIves/github-pages-deploy-action@4.1.1
+        uses: JamesIves/github-pages-deploy-action@4.1.2
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH: gh-pages
@@ -65,7 +65,7 @@ jobs:
           CLEAN: true
 
       - name: Deploy doc "extension"
-        uses: JamesIves/github-pages-deploy-action@4.1.1
+        uses: JamesIves/github-pages-deploy-action@4.1.2
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH: gh-pages
