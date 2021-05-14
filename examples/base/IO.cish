@@ -1,0 +1,54 @@
+#!/bin/cish
+
+HOME = IO::currentDir()
+BASE = HOME.parent()
+TMPDIR = IO::createTempDir()
+GPG_AGENT = IO::createDir(TMPDIR+"/gpg_agent_home/")
+
+theFile = new CiFile("target")
+if(theFile.~Zip()) {
+  Log::println("Hi")
+}
+
+Console::print("---- BUILDER ----")
+
+IO::copy(HOME + "/.idea/", GPG_AGENT+ "/")
+IO::chown(IO::currentUser(), null, GPG_AGENT );
+IO::findDir(GPG_AGENT).exec(file -> {
+  try {
+    IO::chmod(070, file)
+    }catch (Exception e) {
+    e.printStackTrace();
+    }
+});
+IO::findFile(GPG_AGENT).exec(file -> {
+ try {
+ IO.chmod(700, file)
+     }catch (Exception e) {
+     e.printStackTrace();
+     }
+     }
+ );
+
+Console::print(GPG_AGENT);
+
+#IO::listFiles("./target").each("test");
+#IO::listFiles("./target");
+#
+#
+#IO::listFiles("./target").each((file) => {
+#  if(file.isExecutable()) {
+#    file.delete();
+#  }
+#});
+#
+#IO::listFiles.each((file) => {
+#  if(file.isExecutable()) {
+#    file.delete();
+#  }
+#});
+#IO::listFiles("./target").each({
+#  if(it.isExecutable()) {
+#    it.delete();
+#  }
+#});

@@ -1,0 +1,19 @@
+#!/bin/cish
+
+FOR::range(1,10,{
+     Console::print(it);
+});
+FOR::each(list,{
+       Console::print(it);
+});
+
+WHILE::True(cond,{
+  if(it.is()) {
+     Console::print(it);
+  }
+});
+WHILE::True({
+  if(it.is()) {
+     it.cancle()
+  }
+});

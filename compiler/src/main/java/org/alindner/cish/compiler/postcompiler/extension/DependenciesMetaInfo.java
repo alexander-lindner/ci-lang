@@ -5,6 +5,7 @@ import lombok.Data;
 import org.alindner.cish.extension.Type;
 import org.alindner.cish.extension.Version;
 
+import java.io.Serializable;
 import java.net.URL;
 
 /**
@@ -15,8 +16,9 @@ import java.net.URL;
  */
 @Builder
 @Data
-public class DependenciesMetaInfo {
-	URL     url;
+public class DependenciesMetaInfo implements Serializable {
+	private static final long serialVersionUID = -5589457210110234087L;
+	URL url;
 	Version version;
 	Type    type;
 }

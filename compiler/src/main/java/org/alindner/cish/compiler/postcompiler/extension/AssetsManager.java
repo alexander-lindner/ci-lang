@@ -8,7 +8,6 @@ import java.io.*;
 import java.net.URL;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -32,30 +31,10 @@ public final class AssetsManager implements Serializable {
 	 *
 	 * @param file storage path
 	 */
-	private AssetsManager(final Path file) {
+	AssetsManager(final Path file) {
 		this.file = file;
 	}
 
-	/**
-	 * load an instance of {@link AssetsManager} from file. This is possible, because {@link AssetsManager} is {@link Serializable}
-	 *
-	 * @param file file path of the {@link AssetsManager}
-	 *
-	 * @return instance
-	 */
-	public static AssetsManager load(final Path file) {
-		final Path storePath = CishPath.ofCacheDir(Utils.hash(file.toAbsolutePath().toString()));
-		if (Files.exists(storePath)) {
-			try (final ObjectInputStream ois = new ObjectInputStream(new FileInputStream(storePath.toAbsolutePath().toString()))) {
-				AssetsManager.log.info("Loading cached AssetsManger");
-				return (AssetsManager) ois.readObject();
-			} catch (final IOException | ClassNotFoundException | ClassCastException e) {
-				AssetsManager.log.error("Could not load the AssetsManager from cache directory. Skipping. This reduces the performance");
-				AssetsManager.log.error(e);
-			}
-		}
-		return new AssetsManager(file);
-	}
 
 	/**
 	 * Download a file form url.
@@ -84,18 +63,6 @@ public final class AssetsManager implements Serializable {
 		}
 	}
 
-	/**
-	 * save this class to the filesystem
-	 */
-	public void store() {
-		final Path storePath = CishPath.ofCacheDir(Utils.hash(this.file.toAbsolutePath().toString()));
-		try (final ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(storePath.toAbsolutePath().toString()))) {
-			oos.writeObject(this);
-		} catch (final IOException e) {
-			AssetsManager.log.error("Could not store the AssetsManager to cache directory. Skipping. This reduces the performance");
-			AssetsManager.log.error(e);
-		}
-	}
 
 	/**
 	 * get a asset by url.

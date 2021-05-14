@@ -1,5 +1,0 @@
-#!/bin/cish
-
-require("regex.cish");
-
-Console::print("Hey");

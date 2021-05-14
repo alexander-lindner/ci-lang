@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.alindner.cish.compiler.exceptions.CishException;
 import org.alindner.cish.compiler.exceptions.CishSyntaxError;
+import org.alindner.cish.compiler.postcompiler.CacheManager;
 import org.alindner.cish.compiler.postcompiler.PostCompiler;
 import org.alindner.cish.compiler.postcompiler.extension.ExtensionManager;
 import org.alindner.cish.compiler.precompiler.CishCompiler;
@@ -33,7 +34,7 @@ public class Compiler {
 
 	public Compiler(final boolean debug, final Path cishFile) {
 		this.debug = debug;
-		this.manager = new ExtensionManager(cishFile);
+		this.manager = ExtensionManager.load(cishFile);
 		this.script = new ScriptMetaInfo(cishFile, "main");
 		this.currentScript = this.script;
 		this.postCompiler = new PostCompiler(this.manager, this.currentScript);
@@ -113,6 +114,8 @@ public class Compiler {
 	 * @throws CishException Compilation fails
 	 */
 	public void compile() throws CishException {
+		final CacheManager cm = CacheManager.load();
+
 		Compiler.log.debug("Compile the .cish script to java plain text");
 		try {
 			this.compileCish(this.currentScript.getContent());
@@ -121,13 +124,20 @@ public class Compiler {
 		}
 		this.manager.scanForExtensions();
 		this.manager.processFoundExtensions();
-		try {
-			this.postCompiler.compileJava(this.manager.getImports());
-		} catch (final IOException e) {
-			throw new CishException("Couldn't compile java code. Maybe a bug?", e);
+		if (cm.needsCompilation(this.script)) {
+			try {
+				this.postCompiler.compileJava(this.manager.getImports());
+			} catch (final IOException e) {
+				throw new CishException("Couldn't compile java code. Maybe a bug?", e);
+			}
+			this.manager.store();
+			if (this.script.isRoot()) {
+				cm.add(this.script);
+				cm.store();
+			}
+		} else {
+			Compiler.log.debug("Using cached compilation.");
 		}
-		this.manager.store();
-
 	}
 
 	/**

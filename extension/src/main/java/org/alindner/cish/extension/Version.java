@@ -1,12 +1,15 @@
 package org.alindner.cish.extension;
 
+import java.io.Serializable;
+
 /**
  * A simple class for comparing two versions
  *
  * @author alindner
  * @since 0.7.0
  */
-public class Version implements Comparable<Version> {
+public class Version implements Comparable<Version>, Serializable {
+	private static final long serialVersionUID = -4116953541942872757L;
 	private final String version;
 
 	/**

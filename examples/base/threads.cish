@@ -1,0 +1,31 @@
+#t = Thread::create({
+#  file =  Download::url("https://");
+#  file.extractTo(File::tmp().create("dl"))
+#});
+#
+#t2 = Thread::create({
+#  file =  Download::url("https://");
+#  file.extractTo(File::tmp().create("dl"))
+#  t3 = Thread::create({
+#    file =  Download::url("https://");
+#    file.extractTo(File::tmp().create("dl"))
+#    t3 = Thread::create({
+#      file =  Download::url("https://");
+#      file.extractTo(File::tmp().create("dl"))
+#    });
+#  });
+#});
+#
+#t3 = Thread::create({
+#  file =  Download::url("https://");
+#  file.extractTo(File::tmp().create("dl"))
+#});
+#
+#Thread::finished(t,t2,t3).then({
+#  File::zip("dl");
+#});
+##
+#Thread::async({
+#  file =  Download::url("https://");
+#  file.extractTo(File::tmp().create("dl"))
+#});

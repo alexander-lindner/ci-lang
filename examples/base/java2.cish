@@ -23,7 +23,8 @@ Cool::main("");
 
 
 ```bash
-echo "Hi"
+echo "Hi2"
+echo $VAR1
 ```
 
 `var p = Path.of(".");`

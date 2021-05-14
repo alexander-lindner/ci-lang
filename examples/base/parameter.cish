@@ -1,0 +1,24 @@
+#!/bin/cish
+
+Console::print(Parameter::get(2))
+Console::print(Parameter::get())
+Console::print(Parameter::getCish())
+Console::print(Parameter::getScript())
+
+Parameter::when("test2", "alex",() ->  {
+  Console::print("Ja, test2 = alex")
+});
+Parameter::when("test2", "alex2",() ->  {
+  Console::print("Ja, test2 = alex2")
+});
+Parameter::when("test",  () -> {
+  Console::print("Ja,test existiert" )
+});
+
+Parameter::when(
+  "test",
+  Parameter::options("alex", () -> {Console::print("hi")}),
+  Parameter::options("alex2", () -> {Console::print("hi2")}),
+  Parameter::options("alex3", () -> {Console::print("hi3")}),
+  Parameter::options("alex4", () -> {Console::print("hi4")})
+)

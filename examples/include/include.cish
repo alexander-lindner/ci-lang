@@ -1,0 +1,17 @@
+#!/bin/cish
+
+require("../base/regex.cish");
+
+Console::print("Hey");
+
+
+#
+#load("https://repo1.maven.org/maven2/commons-io/commons-io/2.8.0/commons-io-2.8.0.jar",[
+#  "org.apache.commons.io.file.PathUtils",
+#  "org.apache.commons.io.IOUtils"
+#])
+#load("https://repo1.maven.org/maven2/commons-io/commons-io/2.7/commons-io-2.7.jar")
+#
+#require("./tes2")
+#include("./tes2")
+#`System.out.println(IOUtils.DIR_SEPARATOR_WINDOWS);`

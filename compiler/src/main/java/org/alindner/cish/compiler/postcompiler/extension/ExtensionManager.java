@@ -3,8 +3,9 @@ package org.alindner.cish.compiler.postcompiler.extension;
 import lombok.extern.log4j.Log4j2;
 import org.alindner.cish.compiler.postcompiler.extension.worker.DependencyWorker;
 import org.alindner.cish.compiler.utils.CishPath;
+import org.alindner.cish.compiler.utils.Utils;
 
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -17,25 +18,74 @@ import java.util.stream.Collectors;
  * @since 0.7.0
  */
 @Log4j2
-public final class ExtensionManager {
+public final class ExtensionManager implements Serializable {
 	private final static List<Path>            directories               = List.of(
 			CishPath.ofExtensions("."),
 			Path.of("/usr/lib/cish/extensions/"),
 			Path.of("./.cish/extensions/")
 	);
+	private static final long                  serialVersionUID          = 6242256947347783642L;
 	private final        Deque<FileInfo>       queue                     = new ArrayDeque<>();
 	private final        Map<FileInfo, String> listOfGlobalLoadedClasses = new HashMap<>();
 	private final        Deque<FileInfo>       loaded                    = new ArrayDeque<>();
 	private final        AssetsManager         assetsManager;
 	private              boolean               notRun                    = false;
+	private              String                hash                      = "";
 
 	/**
 	 * constructor
 	 *
 	 * @param file the cish script
 	 */
-	public ExtensionManager(final Path file) {
-		this.assetsManager = AssetsManager.load(file);
+	private ExtensionManager(final Path file) {
+		this.assetsManager = new AssetsManager(file);
+	}
+
+	/**
+	 * load an instance of {@link ExtensionManager} from file. This is possible, because {@link ExtensionManager} is {@link Serializable}
+	 *
+	 * @param file file path of the cishfile
+	 *
+	 * @return instance
+	 */
+	public static ExtensionManager load(final Path file) {
+		final Path storePath = CishPath.ofCacheDir(ExtensionManager.class.getName());
+		if (Files.exists(storePath)) {
+			try (final ObjectInputStream ois = new ObjectInputStream(new FileInputStream(storePath.toAbsolutePath().toString()))) {
+				ExtensionManager.log.info("Loading cached ExtensionManager");
+				return (ExtensionManager) ois.readObject();
+			} catch (final IOException | ClassNotFoundException | ClassCastException e) {
+				ExtensionManager.log.error("Could not load the ExtensionManager from cache directory. Skipping. This reduces the performance");
+				ExtensionManager.log.error(e);
+			}
+		}
+		return new ExtensionManager(file);
+	}
+
+	/**
+	 * calculate a comparable string based on all loaded extensions
+	 *
+	 * @return comparable string
+	 */
+	private static String calcHash() {
+		return ExtensionManager.directories.stream() //todo duplicated code
+		                                   .parallel()
+		                                   .filter(Files::exists)
+		                                   .filter(Files::isDirectory)
+		                                   .flatMap(extensionsDir -> {
+			                                   try {
+				                                   return Files.walk(extensionsDir);
+			                                   } catch (final IOException e) {
+				                                   ExtensionManager.log.error(String.format("Couldn't read in jars from directory %s", extensionsDir), e);
+			                                   }
+			                                   return null;
+		                                   })
+		                                   .filter(Objects::nonNull)
+		                                   .filter(path -> path.getFileName().toString().endsWith(".jar"))
+		                                   .map(path -> path.normalize().toAbsolutePath())
+		                                   .sorted()
+		                                   .map(path -> Utils.hash(path.toString()))
+		                                   .collect(Collectors.joining(":"));
 	}
 
 	/**
@@ -45,7 +95,7 @@ public final class ExtensionManager {
 	 * org.alindner.cish.extension.annotations.CishDependency}.
 	 */
 	public void scanForExtensions() {
-		if (!this.notRun) {
+		if (!this.notRun && !this.hash.equals(ExtensionManager.calcHash())) {
 			ExtensionManager.directories.stream()
 			                            .parallel()
 			                            .filter(Files::exists)
@@ -71,8 +121,8 @@ public final class ExtensionManager {
 				                            }
 			                            });
 			this.notRun = true;
+			this.hash = ExtensionManager.calcHash();
 		}
-
 	}
 
 	/**
@@ -186,7 +236,13 @@ public final class ExtensionManager {
 	 * store this instance to filesystem. It will be load automatically, when a new instance is created. This is intended for caching purpose.
 	 */
 	public void store() {
-		this.assetsManager.store();
+		final Path storePath = CishPath.ofCacheDir(ExtensionManager.class.getName());
+		try (final ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(storePath.toAbsolutePath().toString()))) {
+			oos.writeObject(this);
+		} catch (final IOException e) {
+			ExtensionManager.log.error("Could not store the ExtensionManager to cache directory. Skipping. This reduces the performance");
+			ExtensionManager.log.error(e);
+		}
 	}
 }
 

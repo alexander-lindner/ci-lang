@@ -7,6 +7,7 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -38,6 +39,10 @@ public class Console {
 	 * @param value value
 	 */
 	public static void print(final List<?> value) {
+		Console.print(Type.OUTPUT, value.toString());
+	}
+
+	public static void print(final Path value) {
 		Console.print(Type.OUTPUT, value.toString());
 	}
 

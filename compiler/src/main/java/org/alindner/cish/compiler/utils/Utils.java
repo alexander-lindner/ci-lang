@@ -64,6 +64,22 @@ public class Utils {
 	}
 
 	/**
+	 * load the content of given files
+	 *
+	 * @param fileName file
+	 *
+	 * @return content
+	 */
+	public static String loadTextContentOrEmpty(final String fileName) {
+		try {
+			return new String(Files.readAllBytes(Paths.get(fileName)));
+		} catch (final IOException e) {
+			Utils.log.error("Couldn't read file, using empty content as result", e);
+			return "";
+		}
+	}
+
+	/**
 	 * Return a list of files form a given jar
 	 *
 	 * @param jarName path to jar file
