@@ -6,4 +6,5 @@ module org.alindner.cish.interpreter {
 	requires static lombok;
 	requires transitive org.alindner.cish.compiler;
 	requires net.sourceforge.argparse4j;
+	requires org.alindner.cish.lang;
 }

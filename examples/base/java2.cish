@@ -17,14 +17,32 @@ class Cool {
         System.out.println("Very cool");
     }
 }
-
 ```
 Cool::main("");
 
 
 ```bash
-echo "Hi2"
-echo $VAR1
+for i in $(seq 0 $(($extendedParamsNumber-1)) ) ; do
+    k="extendedParamsKey${i}"
+    v="extendedParams${!k}"
+    echo "${!k}:${!v}"
+done
+
+for i in $(seq 0 $(($simpleArgsNumber-1)) ) ; do
+    k="simpleArgs${i}"
+    echo "this parameter has been set: ${!k}"
+done
+
+for i in $(seq 0 $((paramsNumber-1)) ) ; do
+    k="params${i}"
+    echo "this argument has been set: ${!k}"
+done
+
+sleep 10
+echo $0
+
+echo $script
+#printenv
 ```
 
 `var p = Path.of(".");`

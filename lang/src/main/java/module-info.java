@@ -8,7 +8,6 @@ module org.alindner.cish.lang {
 
 	requires org.alindner.cish.extension;
 	requires static lombok;
-	requires maven.invoker;
 	requires transitive org.apache.logging.log4j;
 	requires transitive org.apache.commons.io;
 //	requires org.apache.commons.lang3;

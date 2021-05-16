@@ -1,23 +1,15 @@
 #!/bin/cish
-
-Maven::clean()
-Maven::pkg()
+mvn = Maven::builder().parameter("skipTests").parameter("versioning.disable").build();
 
 
-IO::listFiles("interpreter/target/").exec((file) -> {
-  if(file.~Jar()) {
-        if (file.getName().contains("-jar-with-dependencies")) {
-            INTERPRETER="target/cish"
-            IO::setContent(INTERPRETER, "#!/usr/bin/java -jar \\n")
-            IO::addContent(INTERPRETER, file.getContent())
-            IO::executable(INTERPRETER,true)
-            IO::copy(INTERPRETER,"docker/build/cish")
-#BUG: a char on this line is needed
-            INTERPRETER="target/cish-alpine"
-            IO::setContent(INTERPRETER, "#!/opt/openjdk-15/bin/java -jar \\n")
-            IO::addContent(INTERPRETER, file.getContent())
-            IO::executable(INTERPRETER,true)
-            IO::copy(INTERPRETER,"docker/build/cish-alpine")
-        }
-    }
-});
+INTERPRETER="./build/target/cish"
+mvn.run("clean", "process-resources", "package")
+
+IO::removeIfExists(INTERPRETER)
+IO::removeIfExists("./docker/build/lib")
+IO::copy("./build/target/lib", "./build/docker/")
+IO::copy("./interpreter/target/interpreter-*.jar","./build/docker/lib")
+IO::copy("./build/execTemplate.sh","./build/docker/cish")
+IO::copy("./build/execTemplate.sh",INTERPRETER)
+IO::executable(INTERPRETER,true)
+IO::executable("./build/docker/cish",true)

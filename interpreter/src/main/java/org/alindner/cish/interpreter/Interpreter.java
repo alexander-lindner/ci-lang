@@ -32,6 +32,7 @@ public class Interpreter {
 	protected final List<String>        simpleParameters = new ArrayList<>();
 	private final   boolean             debug;
 	private final   boolean             verbose;
+	org.alindner.cish.lang.Maven.Builder.Executor test;
 	private         Namespace           args             = null;
 	private         Compiler            compiler;
 
