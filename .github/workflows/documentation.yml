@@ -40,35 +40,31 @@ jobs:
       - name: Deploy doc "compiler"
         uses: JamesIves/github-pages-deploy-action@4.1.2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          BRANCH: gh-pages
+          branch: gh-pages
           folder: ./compiler/target/site/apidocs/
           target-folder: ./docs/compiler/
-          CLEAN: true
+          clean: true
 
       - name: Deploy doc "interpreter"
         uses: JamesIves/github-pages-deploy-action@4.1.2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          BRANCH: gh-pages
+          branch: gh-pages
           folder: ./interpreter/target/site/apidocs/
           target-folder: ./docs/interpreter/
-          CLEAN: true
+          clean: true
 
       - name: Deploy doc "lang"
         uses: JamesIves/github-pages-deploy-action@4.1.2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          BRANCH: gh-pages
+          branch: gh-pages
           folder: ./lang/target/site/apidocs/
           target-folder: ./docs/lang/
-          CLEAN: true
+          clean: true
 
       - name: Deploy doc "extension"
         uses: JamesIves/github-pages-deploy-action@4.1.2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          BRANCH: gh-pages
+          branch: gh-pages
           folder: ./extension/target/site/apidocs/
           target-folder: ./docs/extension/
-          CLEAN: true
+          clean: true
