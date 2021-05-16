@@ -1,0 +1,1 @@
+moduleSearchIndex = [{"l":"org.alindner.cish.compiler"},{"l":"org.alindner.cish.extension"},{"l":"org.alindner.cish.interpreter"},{"l":"org.alindner.cish.lang"}]

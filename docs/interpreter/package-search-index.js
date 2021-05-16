@@ -1,1 +1,0 @@
-packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"m":"org.alindner.cish.interpreter","l":"org.alindner.cish.interpreter"}];updateSearchResults();

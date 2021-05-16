@@ -1,1 +1,0 @@
-packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"m":"org.alindner.cish.compiler","l":"org.alindner.cish.compiler"},{"m":"org.alindner.cish.compiler","l":"org.alindner.cish.compiler.exceptions"},{"m":"org.alindner.cish.compiler","l":"org.alindner.cish.compiler.utils"}];updateSearchResults();

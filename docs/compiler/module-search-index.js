@@ -1,1 +1,0 @@
-moduleSearchIndex = [{"l":"org.alindner.cish.compiler"}];updateSearchResults();
