@@ -35,37 +35,13 @@ jobs:
           export VERSIONING_GIT_BRANCH=${GITHUB_REF#refs/};
           VERSIONING_GIT_BRANCH=${VERSIONING_GIT_BRANCH%/merge};
           fi
-          ./mvnw -DskipTests -Dversioning.disable=true -B clean package install javadoc:javadoc
+          ./mvnw -DskipTests -Dversioning.disable=true -B clean package install javadoc:javadoc javadoc:aggregate
 
-      - name: Deploy doc "compiler"
+      - name: Deploy doc 🚀
         uses: JamesIves/github-pages-deploy-action@4.1.3
         with:
           #          token: ${{ secrets.GITHUB_TOKEN }}
           branch: gh-pages
-          folder: ./compiler/target/site/apidocs/
-          target-folder: ./docs/compiler/
-          clean: true
-
-      - name: Deploy doc "interpreter"
-        uses: JamesIves/github-pages-deploy-action@4.1.3
-        with:
-          branch: gh-pages
-          folder: ./interpreter/target/site/apidocs/
-          target-folder: ./docs/interpreter/
-          clean: true
-
-      - name: Deploy doc "lang"
-        uses: JamesIves/github-pages-deploy-action@4.1.3
-        with:
-          branch: gh-pages
-          folder: ./lang/target/site/apidocs/
-          target-folder: ./docs/lang/
-          clean: true
-
-      - name: Deploy doc "extension"
-        uses: JamesIves/github-pages-deploy-action@4.1.3
-        with:
-          branch: gh-pages
-          folder: ./extension/target/site/apidocs/
-          target-folder: ./docs/extension/
+          folder: ./target/site/apidocs/
+          target-folder: ./docs/
           clean: true
