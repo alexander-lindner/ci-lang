@@ -38,7 +38,7 @@ jobs:
           ./mvnw -DskipTests -Dversioning.disable=true -B clean package install javadoc:javadoc
 
       - name: Deploy doc "compiler"
-        uses: JamesIves/github-pages-deploy-action@4.1.2
+        uses: JamesIves/github-pages-deploy-action@4.1.3
         with:
           #          token: ${{ secrets.GITHUB_TOKEN }}
           branch: gh-pages
@@ -47,7 +47,7 @@ jobs:
           clean: true
 
       - name: Deploy doc "interpreter"
-        uses: JamesIves/github-pages-deploy-action@4.1.2
+        uses: JamesIves/github-pages-deploy-action@4.1.3
         with:
           branch: gh-pages
           folder: ./interpreter/target/site/apidocs/
@@ -55,7 +55,7 @@ jobs:
           clean: true
 
       - name: Deploy doc "lang"
-        uses: JamesIves/github-pages-deploy-action@4.1.2
+        uses: JamesIves/github-pages-deploy-action@4.1.3
         with:
           branch: gh-pages
           folder: ./lang/target/site/apidocs/
@@ -63,7 +63,7 @@ jobs:
           clean: true
 
       - name: Deploy doc "extension"
-        uses: JamesIves/github-pages-deploy-action@4.1.2
+        uses: JamesIves/github-pages-deploy-action@4.1.3
         with:
           branch: gh-pages
           folder: ./extension/target/site/apidocs/
