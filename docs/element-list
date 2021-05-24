@@ -1,13 +1,13 @@
-module:org.alindner.cish.compiler
+module:cish.compiler
 org.alindner.cish.compiler
 org.alindner.cish.compiler.exceptions
 org.alindner.cish.compiler.utils
-module:org.alindner.cish.extension
+module:cish.extension
 org.alindner.cish.extension
 org.alindner.cish.extension.annotations
-module:org.alindner.cish.interpreter
+module:cish.interpreter
 org.alindner.cish.interpreter
-module:org.alindner.cish.lang
+module:cish.lang
 org.alindner.cish.lang
 org.alindner.cish.lang.datatype
 org.alindner.cish.lang.datatype.lambdas
