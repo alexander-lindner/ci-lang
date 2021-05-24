@@ -1,7 +1,5 @@
 #!/bin/cish
-
-
-load("GithubLocal.java")
+load("../extending/GithubLocal.java")
 
 stars = GithubLocal::getStars("lsds/sgx-lkl")
 Console::print(stars)

@@ -88,6 +88,10 @@ public final class ExtensionManager implements Serializable {
 		                                   .collect(Collectors.joining(":"));
 	}
 
+	public AssetsManager getAssetsManager() {
+		return this.assetsManager;
+	}
+
 	/**
 	 * read in all extensions form the given directories
 	 * <p>

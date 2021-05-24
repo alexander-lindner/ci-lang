@@ -1,12 +1,16 @@
 package org.alindner.cish.compiler.postcompiler;
 
+import lombok.extern.log4j.Log4j2;
 import org.alindner.cish.compiler.postcompiler.extension.ExtensionManager;
 import org.alindner.cish.compiler.utils.CishPath;
 
+import java.io.IOException;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
@@ -18,6 +22,7 @@ import java.util.stream.Collectors;
  * @author alindner
  * @since 0.7.0
  */
+@Log4j2
 public class ModuleManager {
 	private final Path             cishFile;
 	private final ExtensionManager extensionManager;
@@ -31,6 +36,28 @@ public class ModuleManager {
 	public ModuleManager(final Path cishFile, final ExtensionManager extensionManager) {
 		this.cishFile = cishFile;
 		this.extensionManager = extensionManager;
+	}
+
+	public static List<String> getPackagesOfJar(final Path path) {
+		final ModuleFinder moduleFinder = ModuleFinder.of(path);
+
+		return moduleFinder.findAll().stream()
+		                   .flatMap(moduleReference -> {
+			                   try {
+				                   return moduleReference.open().list();
+			                   } catch (final IOException e) {
+				                   ModuleManager.log.error("Couldn't read in jar file", e);
+			                   }
+			                   return null;
+		                   })
+		                   .filter(packageName -> packageName.endsWith(".class"))
+		                   .map(packageName -> {
+			                   final String[] array = packageName.split("/");
+			                   final String[] a     = Arrays.copyOfRange(array, 0, array.length - 1);
+			                   return String.join(".", a) + ".*";
+		                   })
+		                   .distinct()
+		                   .collect(Collectors.toList());
 	}
 
 	/**
@@ -101,5 +128,14 @@ public class ModuleManager {
 		return ModuleLayer
 				.boot()
 				.defineModulesWithOneLoader(pluginsConfiguration, this.getClass().getClassLoader());
+	}
+
+	public List<String> getPackagesOfJar(final String url) {
+		try {
+			return ModuleManager.getPackagesOfJar(this.extensionManager.getAssetsManager().getByUrl(new URI(url).toURL()).getPath());
+		} catch (final IOException | URISyntaxException e) {
+			ModuleManager.log.error("Couldn't download dependency");
+		}
+		return List.of();
 	}
 }

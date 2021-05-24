@@ -1,0 +1,29 @@
+#!/bin/cish
+load("https://gist.githubusercontent.com/alexander-lindner/616b32c6cc0fc5682581b8af300a34d0/raw/7e5b8bc2f9165b72498ee8b9014062a23e3f805e/GithubApi.java")
+
+#load("https://repo1.maven.org/maven2/commons-io/commons-io/2.8.0/commons-io-2.8.0.jar",*)
+
+load("https://repo1.maven.org/maven2/commons-io/commons-io/2.8.0/commons-io-2.8.0.jar",[
+  "org.apache.commons.io.file.PathUtils",
+  "org.apache.commons.io.IOUtils"
+])
+
+```java
+class Cool {
+    public static void main(String... args){
+        System.out.println("Very cool");
+    }
+}
+
+```
+Cool::main("");
+
+require("include.cish");
+
+stars2 = GithubApi::getStars("lsds/sgx-lkl")
+Console::print(stars2)
+
+
+
+#include("include.cish")
+`System.out.println(IOUtils.DIR_SEPARATOR_WINDOWS);`

@@ -1,30 +1,27 @@
+import com.google.gson.JsonParser;
+import org.alindner.cish.extension.annotations.CishExtension;
+import org.alindner.cish.extension.annotations.MavenDependency;
+
+import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
-import java.net.URI;
 
-package demo.extension.extending;
-
-@CishExtension
-public class Github {
-	@Dependencies({
-			              Maven(pkg = "com.google.code.gson", name = "gson", version = "2.8.6")
-	              })
+@CishExtension("0.2.6")
+@MavenDependency(value = "com.google.code.gson", name = "gson", version = "2.8.6")
+public class GithubLocal {
 	public static Integer getStars(final String repoName) {
 		try {
 			final var request = HttpRequest.newBuilder(
 					URI.create(String.format("https://api.github.com/repos/%s", repoName))
 			).header("accept", "application/json").build();
 
-
 			final var response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
 
-
-			return new JsonParser().parse(response.body()).getAsJsonObject().get("stargazers_count").getAsString(); //John
+			return JsonParser.parseString(response.body()).getAsJsonObject().get("stargazers_count").getAsInt();
 		} catch (final Exception exception) {
 			return 0;
 		}
-
 	}
 }

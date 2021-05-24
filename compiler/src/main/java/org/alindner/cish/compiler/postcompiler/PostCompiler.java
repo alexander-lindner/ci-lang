@@ -12,11 +12,16 @@ import org.alindner.cish.compiler.utils.Utils;
 import org.apache.commons.io.FilenameUtils;
 
 import javax.tools.*;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -25,6 +30,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
+import java.util.zip.GZIPInputStream;
 
 /**
  * compile a java file within the cish environment
@@ -181,62 +187,130 @@ public class PostCompiler {
 	 * @throws IOException error when downloading, moving and working with urls/uris
 	 */
 	private void prependsImports() throws IOException {
-		final AtomicReference<String> content = new AtomicReference<>("");
-		final Map<String, Path> l = this.script.getLoads()
-		                                       .stream()
-		                                       .map(s -> {
-			                                       final URI      fileName = URI.create(s);
-			                                       final String[] tmp      = fileName.getPath().split("/");
-			                                       final Path     target   = CishPath.ofCishFile(this.script.getRootScript()).resolve(tmp[tmp.length - 1]);
+		final List<Path> files = new ArrayList<>();
+		files.add(this.script.getJavaFile());
+		final Map<String, Path> filesToLoad = this.script.getLoads()
+		                                                 .stream()
+		                                                 .map(s -> {
+			                                                 final URI fileUrl = URI.create(s);
 
-			                                       if (fileName.getScheme().equals("http") || fileName.getScheme().equals("https")) {
-				                                       try {
-//							Files.copy(new URL(s), target);
-					                                       PostCompiler.log.debug("todo");
-					                                       throw new IOException();
-				                                       } catch (final IOException e) {
-					                                       PostCompiler.log.error("Failed creating and downloading a url form string", e);
-				                                       }
-			                                       } else {
-				                                       try {
-					                                       Files.copy(Path.of(fileName), target);
-				                                       } catch (final IOException e) {
-					                                       PostCompiler.log.error("Failed copying the file to the cached target dir", e);
-				                                       }
-			                                       }
-			                                       if (Files.exists(target)) {
-				                                       return Map.ofEntries(Map.entry(s, target));
-			                                       } else {
-				                                       return new HashMap<String, Path>();
-			                                       }
-		                                       })
-		                                       .flatMap(stringFileMap -> stringFileMap.entrySet().stream())
-		                                       .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-		this.script.getImports()
-		           .stream()
-		           .filter(Objects::nonNull)
-		           .map(s -> {
-			           final List<String> list = new ArrayList<>();
-			           if (s.startsWith("*.")) {
-				           final Path f = l.get(s.substring(2));
-				           try {
-					           list.addAll(PostCompiler.fileToClass(f));
-				           } catch (final CishException e) {
-					           PostCompiler.log.error(e);
-				           }
-			           } else {
-				           list.addAll(List.of(s));
-			           }
-			           return list;
-		           })
-		           .flatMap(Collection::stream)
-		           .filter(Objects::nonNull)
-		           .forEach(s -> content.set(String.format("%s\n import %s;", content.get(), s)));
+			                                                 final String[] tmp = fileUrl.getPath().split("/");
 
-		final List<String> tmpContent = Files.readAllLines(this.script.getJavaFile());
-		tmpContent.add(1, content.get());
+			                                                 final Path target;
+			                                                 if (fileUrl.getScheme() != null) {
+				                                                 target = CishPath.ofTmp(Utils.hash(fileUrl.toASCIIString()));
+				                                                 if (fileUrl.getScheme().equals("http") || fileUrl.getScheme().equals("https")) {
+					                                                 try {
+						                                                 final String fileName = tmp[tmp.length - 1];
+						                                                 if (fileName.endsWith(".jar")) {
+							                                                 final Path theTarget = CishPath.ofTmp(Utils.hash(s) + ":jar");
 
-		Files.write(this.script.getJavaFile(), tmpContent);
+							                                                 final HttpResponse<InputStream> response = HttpClient
+									                                                 .newBuilder().followRedirects(HttpClient.Redirect.ALWAYS)
+									                                                 .build()
+									                                                 .send(
+											                                                 HttpRequest.newBuilder(fileUrl).GET().header("Accept-Encoding", "gzip").build(),
+											                                                 HttpResponse.BodyHandlers.ofInputStream()
+									                                                 );
+							                                                 final String encoding = response.headers().firstValue("Content-Encoding").orElse("");
+							                                                 if (encoding.equals("gzip")) {
+								                                                 try (final InputStream is = new GZIPInputStream(response.body());
+								                                                      final FileOutputStream autoCloseOs = new FileOutputStream(
+										                                                      theTarget.toAbsolutePath().toString()
+								                                                      )) {
+									                                                 is.transferTo(autoCloseOs);
+								                                                 }
+							                                                 } else {
+								                                                 try (final InputStream is = response.body();
+								                                                      final FileOutputStream os = new FileOutputStream(theTarget.toAbsolutePath().toString())) {
+									                                                 is.transferTo(os);
+								                                                 }
+							                                                 }
+						                                                 } else {
+							                                                 final Path theTarget;
+							                                                 if (fileName.endsWith(".java")) {
+								                                                 theTarget = CishPath.ofPackage(
+										                                                 this.script.getScript(),
+										                                                 this.script.getPkg()
+								                                                 ).resolve(fileName);
+							                                                 } else {
+								                                                 theTarget = CishPath.ofPackage(
+										                                                 this.script.getScript(),
+										                                                 this.script.getPkg()
+								                                                 ).resolve(Utils.hash(s));
+							                                                 }
+							                                                 final HttpResponse<String> response = HttpClient.newHttpClient().send(
+									                                                 HttpRequest.newBuilder(fileUrl).build(),
+									                                                 HttpResponse.BodyHandlers.ofString()
+							                                                 );
+							                                                 final String c = String.format("package %s;\n%s", this.script.getPkg(), response.body());
+							                                                 Files.write(theTarget, c.getBytes(StandardCharsets.UTF_8));
+
+							                                                 final String className = PostCompiler.fileToClass(theTarget).get(0);
+							                                                 if (!fileName.endsWith(".java")) {
+								                                                 Files.move(theTarget, theTarget.getParent().resolve(className));
+							                                                 }
+							                                                 this.script.getImports().add(String.format(
+									                                                 "%s.%s",
+									                                                 this.script.getPkg(),
+									                                                 className
+							                                                 ));
+						                                                 }
+					                                                 } catch (final InterruptedException | IOException | CishException e) {
+						                                                 PostCompiler.log.error("Failed downloading a url from the load statement", e);
+					                                                 }
+				                                                 }
+
+			                                                 } else if (fileUrl.getPath().endsWith(".java")) {
+				                                                 final Path file = this.script.getScript().getParent().resolve(s);
+				                                                 target = CishPath.ofPackage(this.script.getRootScript(), this.script.getPkg()).resolve(file.getFileName());
+				                                                 try {
+					                                                 files.add(target);
+					                                                 if (Files.exists(target)) {
+						                                                 Files.delete(target);
+					                                                 }
+					                                                 Files.copy(file, target);
+					                                                 final List<String> tmpContent = Files.readAllLines(target);
+					                                                 tmpContent.add(0, String.format("package %s;%n", this.script.getPkg()));
+					                                                 Files.write(target, tmpContent);
+
+					                                                 try {
+						                                                 this.script.getImports().add(String.format(
+								                                                 "%s.%s",
+								                                                 this.script.getPkg(),
+								                                                 PostCompiler.fileToClass(target).get(0)
+						                                                 ));
+					                                                 } catch (final CishException e) {
+						                                                 PostCompiler.log.error("Couldn't read in copied java file", e);
+					                                                 }
+				                                                 } catch (final IOException e) {
+					                                                 PostCompiler.log.error("Failed copying the file to the cached target dir", e);
+				                                                 }
+			                                                 } else {
+				                                                 target = CishPath.ofCishFile(this.script.getRootScript()).resolve(tmp[tmp.length - 1]);
+				                                                 try {
+
+					                                                 Files.copy(Path.of(fileUrl), target);
+				                                                 } catch (final IOException e) {
+					                                                 PostCompiler.log.error("Failed copying the file to the cached target dir", e);
+
+				                                                 }
+			                                                 }
+			                                                 if (Files.exists(target)) {
+				                                                 return Map.ofEntries(Map.entry(s, target));
+			                                                 } else {
+				                                                 return new HashMap<String, Path>();
+			                                                 }
+		                                                 })
+		                                                 .flatMap(stringFileMap -> stringFileMap.entrySet().stream())
+		                                                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+		files.forEach(f -> {
+			try {
+				this.addImportsToJavaFile(f, filesToLoad);
+			} catch (final IOException e) {
+				e.printStackTrace();
+			}
+		});
 		Files.write(
 				this.script.getModuleInfo(),
 				String.format(
@@ -244,6 +318,32 @@ public class PostCompiler {
 						this.moduleManager.getRequireString()
 				).getBytes()
 		); //todo gets overridden with subscripts. Content should not change
+	}
+
+	private void addImportsToJavaFile(final Path javaFile, final Map<String, Path> filesToLoad) throws IOException {
+		final AtomicReference<String> content = new AtomicReference<>("");
+		System.out.println(this.script.getImports());
+		this.script.getImports()
+		           .stream()
+		           .filter(Objects::nonNull)
+		           .map(s -> {
+			           final List<String> list = new ArrayList<>();
+			           if (s.startsWith("*.")) { // will be called when load() statement is used
+				           list.addAll(this.moduleManager.getPackagesOfJar(s.substring(2)));
+			           } else {
+				           list.add(s);
+			           }
+			           return list;
+		           })
+		           .flatMap(Collection::stream)
+		           .filter(Objects::nonNull)
+		           .forEach(s -> content.set(String.format("%s\n import %s;", content.get(), s)));
+
+		final List<String> tmpContent = Files.readAllLines(javaFile);
+		tmpContent.add(1, content.get());
+
+		Files.write(javaFile, tmpContent);
+
 	}
 
 	/**
