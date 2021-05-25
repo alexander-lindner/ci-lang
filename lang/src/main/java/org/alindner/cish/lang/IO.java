@@ -1,58 +1,64 @@
 package org.alindner.cish.lang;
 
+import lombok.extern.log4j.Log4j2;
 import org.alindner.cish.extension.annotations.CishExtension;
 import org.alindner.cish.lang.file.FileExecutor;
 import org.apache.commons.io.FileUtils;
 
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
-import java.nio.file.attribute.PosixFileAttributeView;
-import java.nio.file.attribute.PosixFilePermission;
-import java.nio.file.attribute.PosixFilePermissions;
-import java.nio.file.attribute.UserPrincipalLookupService;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Set;
+import java.nio.file.attribute.*;
+import java.time.Instant;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 /**
  * A class which holds static methods to interact with the filesystem
  *
  * @author alindner
+ * @since 0.5.3
  */
 @CishExtension("0.2")
+@Log4j2
 public class IO {
+	public static Path of(final String path, final String... paths) {
+		return Path.of(path, paths).normalize();
+	}
+
 	/**
 	 * creates a temporary directory. The directory gets delete on jvm shutdown or if this fails on os shutdown
 	 *
 	 * @return temp directory
 	 */
-	public static CiFile createTempDir() {
-		final CiFile f;
+	public static Path createTempDir() {
+		final Path f;
 		try {
-			f = new CiFile(Files.createTempDirectory("cish").toFile());
+			f = Files.createTempDirectory("cish");
 			Runtime.getRuntime().addShutdownHook(new java.lang.Thread(() -> {
 				try {
-					Files.walk(f.toPath())
+					Files.walk(f)
 					     .sorted(Comparator.reverseOrder())
-					     .map(Path::toFile)
-					     .forEach(File::delete);
+					     .forEach(path -> {
+						     try {
+							     Files.deleteIfExists(path);
+						     } catch (final IOException e) {
+							     e.printStackTrace();
+						     }
+					     });
 				} catch (final IOException e) {
-					Log.internal(String.format("Couldn't delete temporary directory %s", f.getAbsolutePath()), e);
+					Log.internal(String.format("Couldn't delete temporary directory %s", f.toAbsolutePath()), e);
 				}
 			}));
 			return f;
 		} catch (final IOException e) {
 			Log.error("Couldn't create temporary directory %s", e);
 		}
-		return new CiFile(""); //todo add alternative
+		return IO.of("/tmp/", "cish", String.valueOf(new Random().nextGaussian() * 10000));
 	}
 
 	/**
@@ -60,9 +66,9 @@ public class IO {
 	 *
 	 * @param file file
 	 */
-	public static void removeIfExists(final CiFile file) {
+	public static void removeIfExists(final Path file) {
 		try {
-			FileUtils.deleteDirectory(file);
+			FileUtils.deleteDirectory(file.toFile());
 		} catch (final IOException e) {
 			Log.fatal("Couldn't delete directory", e);
 		}
@@ -74,7 +80,7 @@ public class IO {
 	 * @param file file
 	 */
 	public static void removeIfExists(final String file) {
-		IO.removeIfExists(new CiFile(file));
+		IO.removeIfExists(Path.of(file));
 	}
 
 	/**
@@ -85,13 +91,13 @@ public class IO {
 	 *
 	 * @return CiFile representation
 	 */
-	public static CiFile setContent(final String file, final String content) {
+	public static Path setContent(final String file, final String content) {
 		try {
 			Files.write(Paths.get(file), content.getBytes());
 		} catch (final IOException e) {
 			Log.fatal(String.format("Couldn't set content of file %s", file), e);
 		}
-		return new CiFile(file);
+		return Path.of(file);
 	}
 
 	/**
@@ -102,13 +108,13 @@ public class IO {
 	 *
 	 * @return CiFile representation
 	 */
-	public static CiFile setContent(final String file, final byte[] content) {
+	public static Path setContent(final String file, final byte[] content) {
 		try {
 			Files.write(Paths.get(file), content);
 		} catch (final IOException e) {
 			Log.fatal(String.format("Couldn't set content of file %s", file), e);
 		}
-		return new CiFile(file);
+		return Path.of(file);
 	}
 
 	/**
@@ -119,8 +125,8 @@ public class IO {
 	 *
 	 * @return CiFile representation
 	 */
-	public static CiFile setContent(final CiFile file, final String content) {
-		return IO.setContent(file.getAbsolutePath(), content.getBytes(StandardCharsets.UTF_8));
+	public static Path setContent(final Path file, final String content) {
+		return IO.setContent(file.toAbsolutePath().normalize().toString(), content.getBytes(StandardCharsets.UTF_8));
 	}
 
 	/**
@@ -131,7 +137,7 @@ public class IO {
 	 *
 	 * @return CiFile representation
 	 */
-	public static CiFile addContent(final CiFile file, final String content) {
+	public static Path addContent(final Path file, final String content) {
 		return IO.addContent(file, content.getBytes(StandardCharsets.UTF_8));
 	}
 
@@ -143,9 +149,9 @@ public class IO {
 	 *
 	 * @return CiFile representation
 	 */
-	public static CiFile addContent(final CiFile file, final byte[] content) {
+	public static Path addContent(final Path file, final byte[] content) {
 		try {
-			Files.write(file.toPath(), content, StandardOpenOption.APPEND);
+			Files.write(file, content, StandardOpenOption.APPEND);
 		} catch (final IOException e) {
 			Log.fatal(String.format("Couldn't append content to file %s", file), e);
 		}
@@ -161,8 +167,8 @@ public class IO {
 	 *
 	 * @return CiFile representation
 	 */
-	public static CiFile addContent(final String file, final String content) {
-		return IO.addContent(new CiFile(file), content.getBytes());
+	public static Path addContent(final String file, final String content) {
+		return IO.addContent(Path.of(file), content.getBytes());
 	}
 
 	/**
@@ -173,8 +179,8 @@ public class IO {
 	 *
 	 * @return CiFile representation
 	 */
-	public static CiFile addContent(final String file, final byte[] content) {
-		return IO.addContent(new CiFile(file), content);
+	public static Path addContent(final String file, final byte[] content) {
+		return IO.addContent(Path.of(file), content);
 	}
 
 	/**
@@ -211,14 +217,14 @@ public class IO {
 	 *
 	 * @return created directory
 	 */
-	public static CiFile createDir(final String path) {
-		final File f = new File(path);
+	public static Path createDir(final String path) {
+		final Path f = Path.of(path);
 		try {
-			Files.createDirectories(f.toPath());
+			Files.createDirectories(f);
 		} catch (final IOException e) {
 			Log.fatal(String.format("Couldn't create the directory %s", path), e);
 		}
-		return new CiFile(f);
+		return f;
 	}
 
 	/**
@@ -226,8 +232,8 @@ public class IO {
 	 *
 	 * @return current directory
 	 */
-	public static CiFile currentDir() {
-		return new CiFile(System.getProperty("user.dir"));
+	public static Path currentDir() {
+		return Path.of(System.getProperty("user.dir"));
 	}
 
 	/**
@@ -238,18 +244,17 @@ public class IO {
 	 *
 	 * @return CiFile representation of the destination path
 	 */
-	public static CiFile copy(final CiFile src, final CiFile dest) {
-		final Path destPath = dest.toPath();
-		final Path srcPath  = src.toPath();
-		if (dest.isDirectory()) {
-			IO.copyFolder(srcPath, Paths.get(destPath.toString(), srcPath.getFileName().toString()));
-			return dest.get(src.getName());
+	public static Path copy(final Path src, final Path dest) {
+		if (IO.isDirectory(dest)) {
+			IO.copyFolder(src, Paths.get(dest.toString(), src.getFileName().toString()));
+			return dest.resolve(src.getFileName());
 		} else {
-			IO.copyFolder(srcPath, destPath);
+			IO.copyFolder(src, dest);
 			return dest;
 		}
 	}
 
+
 	/**
 	 * copy a file to other direction
 	 *
@@ -258,8 +263,8 @@ public class IO {
 	 *
 	 * @return CiFile representation of the destination path
 	 */
-	public static CiFile copy(final String src, final CiFile dest) {
-		return IO.copy(src, dest.toPath().toAbsolutePath().toString());
+	public static Path copy(final String src, final Path dest) {
+		return IO.copy(src, dest.toAbsolutePath().toString());
 	}
 
 	/**
@@ -270,8 +275,8 @@ public class IO {
 	 *
 	 * @return CiFile representation of the destination path
 	 */
-	public static CiFile copy(final String src, final String dest) {
-		return IO.copy(new CiFile(src), new CiFile(dest));
+	public static Path copy(final String src, final String dest) {
+		return IO.copy(Path.of(src), Path.of(dest));
 	}
 
 	/**
@@ -279,26 +284,14 @@ public class IO {
 	 *
 	 * @param src  source path
 	 * @param dest destination path
+	 *
+	 * @todo
 	 */
 	private static void copyFolder(final Path src, final Path dest) {
 		try (final Stream<Path> stream = Files.walk(src)) {
 			stream.forEach(source -> IO.copy(source, dest.resolve(src.relativize(source))));
 		} catch (final IOException e) {
 			Log.fatal(String.format("Couldn't copy the folder '%s' to '%s'", src, dest), e);
-		}
-	}
-
-	/**
-	 * copy a file to other direction
-	 *
-	 * @param source source path
-	 * @param dest   destination path
-	 */
-	private static void copy(final Path source, final Path dest) {
-		try {
-			Files.copy(source, dest, REPLACE_EXISTING);
-		} catch (final Exception e) {
-			Log.fatal(String.format("Couldn't copy the folder '%s' to '%s'", source, dest), e);
 		}
 	}
 
@@ -311,11 +304,11 @@ public class IO {
 	 * @param group group, can be null to ignore
 	 * @param file  file
 	 */
-	public static void chown(final String user, final String group, final CiFile file) {
+	public static void chown(final String user, final String group, final Path file) {
 		final UserPrincipalLookupService lookupService = FileSystems.getDefault().getUserPrincipalLookupService();
 		if (group != null) {
 			try {
-				Files.getFileAttributeView(file.toPath(), PosixFileAttributeView.class, LinkOption.NOFOLLOW_LINKS).setGroup(
+				Files.getFileAttributeView(file, PosixFileAttributeView.class, LinkOption.NOFOLLOW_LINKS).setGroup(
 						lookupService.lookupPrincipalByGroupName(group)
 				);
 			} catch (final IOException e) {
@@ -324,7 +317,7 @@ public class IO {
 		}
 		if (user != null) {
 			try {
-				Files.getFileAttributeView(file.toPath(), PosixFileAttributeView.class, LinkOption.NOFOLLOW_LINKS).setOwner(
+				Files.getFileAttributeView(file, PosixFileAttributeView.class, LinkOption.NOFOLLOW_LINKS).setOwner(
 						lookupService.lookupPrincipalByName(user)
 				);
 			} catch (final IOException e) {
@@ -351,13 +344,13 @@ public class IO {
 	 *
 	 * @return Executor
 	 */
-	public static FileExecutor listDirs(final CiFile path) {
-		if (!path.isDirectory()) {
+	public static FileExecutor listDirs(final Path path) {
+		if (!IO.isDirectory(path)) {
 			return new FileExecutor(new ArrayList<>());
 		}
 		try {
 			return new FileExecutor(
-					Files.walk(path.toPath())
+					Files.walk(path)
 					     .filter(Files::isDirectory)
 					     .collect(Collectors.toList())
 			);
@@ -375,7 +368,7 @@ public class IO {
 	 * @return Executor
 	 */
 	public static FileExecutor listDirs(final String path) {
-		return IO.listDirs(new CiFile(path));
+		return IO.listDirs(Path.of(path));
 	}
 
 	/**
@@ -404,7 +397,7 @@ public class IO {
 	 * @return Executor
 	 */
 	public static FileExecutor listFiles(final String path) {
-		return IO.listFiles(new CiFile(path));
+		return IO.listFiles(Path.of(path));
 	}
 
 	/**
@@ -414,10 +407,10 @@ public class IO {
 	 *
 	 * @return Executor
 	 */
-	public static FileExecutor listFiles(final CiFile path) {
+	public static FileExecutor listFiles(final Path path) {
 		try {
 			return new FileExecutor(
-					Files.walk(path.toPath())
+					Files.walk(path)
 					     .filter(Files::isRegularFile)
 					     .collect(Collectors.toList())
 			);
@@ -435,7 +428,7 @@ public class IO {
 	 *
 	 * @return Executor
 	 */
-	public static FileExecutor findFiles(final CiFile path, final String pattern) {
+	public static FileExecutor findFiles(final Path path, final String pattern) {
 		final Regex regex = Regex.fromGlobbing(pattern);
 		return IO.findFiles(path, regex);
 	}
@@ -448,10 +441,10 @@ public class IO {
 	 *
 	 * @return Executor
 	 */
-	public static FileExecutor findFiles(final CiFile path, final Regex regex) {
+	public static FileExecutor findFiles(final Path path, final Regex regex) {
 		try {
 			return new FileExecutor(
-					Files.walk(path.toPath())
+					Files.walk(path)
 					     .filter(Files::isRegularFile)
 					     .filter(path1 -> regex.matches(path1.toAbsolutePath().toString()))
 					     .collect(Collectors.toList())
@@ -471,7 +464,7 @@ public class IO {
 	 * @return Executor
 	 */
 	public static FileExecutor findFiles(final String path, final Regex pattern) {
-		return IO.findFiles(new CiFile(path), pattern);
+		return IO.findFiles(Path.of(path), pattern);
 	}
 
 	/**
@@ -483,7 +476,7 @@ public class IO {
 	 * @return Executor
 	 */
 	public static FileExecutor findFiles(final String path, final String pattern) {
-		return IO.findFiles(new CiFile(path), pattern);
+		return IO.findFiles(Path.of(path), pattern);
 	}
 
 	/**
@@ -492,7 +485,7 @@ public class IO {
 	 * @param i    permission in dezimal representation
 	 * @param file file
 	 */
-	public static void chmod(final int i, final CiFile file) {
+	public static void chmod(final int i, final Path file) {
 		final String                   chmod = String.valueOf(i);
 		final Set<PosixFilePermission> ownerWritable;
 		switch (chmod.length()) {
@@ -510,7 +503,7 @@ public class IO {
 				break;
 		}
 		try {
-			Files.setPosixFilePermissions(file.toPath(), ownerWritable);
+			Files.setPosixFilePermissions(file, ownerWritable);
 		} catch (final IOException e) {
 			Log.fatal("Couldn't set file permission", e);
 		}
@@ -555,10 +548,10 @@ public class IO {
 	 * @param file         file
 	 * @param isExecutable should the file be executable
 	 *
-	 * @return if it was successful
+	 * @return {@code true}  if it was successful
 	 */
 	public static boolean executable(final String file, final boolean isExecutable) {
-		return IO.executable(new CiFile(file), isExecutable);
+		return IO.executable(Path.of(file), isExecutable);
 	}
 
 	/**
@@ -567,29 +560,78 @@ public class IO {
 	 * @param file         file
 	 * @param isExecutable should the file be executable
 	 *
-	 * @return if it was successful
+	 * @return {@code true} if it was successful
 	 */
-	public static boolean executable(final CiFile file, final boolean isExecutable) {
-		return isExecutable ? file.setExecutable(true) : file.setExecutable(false);
+	public static boolean executable(final Path file, final boolean isExecutable) {
+		try {
+			final Set<PosixFilePermission> perms;
+			if (isExecutable) {
+				perms = new HashSet<>();
+				perms.add(PosixFilePermission.OTHERS_EXECUTE);
+				perms.add(PosixFilePermission.GROUP_EXECUTE);
+				perms.add(PosixFilePermission.OWNER_EXECUTE);
+			} else {
+				perms = Files.getPosixFilePermissions(file);
+				perms.remove(PosixFilePermission.OTHERS_EXECUTE);
+				perms.remove(PosixFilePermission.GROUP_EXECUTE);
+				perms.remove(PosixFilePermission.OWNER_EXECUTE);
+			}
+			Files.setPosixFilePermissions(file, perms);
+		} catch (final IOException e) {
+			IO.log.error("Couldn't set permission of given file: " + file, e);
+			return false;
+		}
+		return true;
+	}
+
+	private static FileExecutor findFiles(final String path, final Predicate<? super Path> predicate) {
+		return new FileExecutor(
+				IO.listFiles(path)
+				  .asList()
+				  .stream()
+				  .filter(predicate)
+				  .collect(Collectors.toList())
+		);
+	}
+
+	/**
+	 * Tests whether a file is a directory.
+	 *
+	 * <p>  By default, symbolic links are followed and the file attribute of the final target
+	 * of the link is read.
+	 *
+	 * @param path the path to the file to test
+	 *
+	 * @return {@code true} if the file is a directory; {@code false} if the file does not exist, is not a directory, or it cannot be determined if the file is a directory or not.
+	 *
+	 * @throws SecurityException In the case of the default provider, and a security manager is installed, its {@link SecurityManager#checkRead(String) checkRead} method denies
+	 *                           read access to the file.
+	 * @see Files#isDirectory(Path, LinkOption...)
+	 */
+	public static boolean isDirectory(final Path path) {
+		return Files.isDirectory(path);
 	}
 
 	/**
 	 * touch a file
 	 *
 	 * @param file      file
-	 * @param timestamp last modified timestamp
+	 * @param timestamp last modified timestamp in ms
 	 */
-	private static void touch(final File file, final long timestamp) {
-		if (!file.exists()) {
+	private static void touch(final Path file, final long timestamp) {
+		if (!Files.exists(file)) {
 			try {
-				new FileOutputStream(file).close();
+				new FileOutputStream(file.toFile()).close();
 			} catch (final IOException e) {
 				Log.internal("Couldn't touch file", e);
 				//todo add alternative
 			}
 		}
-
-		file.setLastModified(timestamp);
+		try {
+			Files.setLastModifiedTime(file, FileTime.from(Instant.ofEpochMilli(timestamp)));
+		} catch (final IOException e) {
+			IO.log.error("Couldn't change last modified times of: " + file);
+		}
 	}
 
 	/**
@@ -597,7 +639,7 @@ public class IO {
 	 *
 	 * @param file file
 	 */
-	public static void touch(final CiFile file) {
+	public static void touch(final Path file) {
 		final long timestamp = System.currentTimeMillis();
 		IO.touch(file, timestamp);
 	}
@@ -609,18 +651,77 @@ public class IO {
 	 */
 	public static void touch(final String file) {
 		final long timestamp = System.currentTimeMillis();
-		IO.touch(new CiFile(file), timestamp);
+		IO.touch(Path.of(file), timestamp);
 	}
 
-	private static FileExecutor findFiles(final String path, final Predicate<? super CiFile> predicate) {
-		return new FileExecutor(
-				IO.listFiles(path)
-				  .asList()
-				  .stream()
-				  .map(thePath -> new CiFile(thePath.toFile()))
-				  .filter(predicate)
-				  .map(File::toPath)
-				  .collect(Collectors.toList())
-		);
+
+	public static Path createAsFile(final Path path) {
+		IO.touch(path);
+		try {
+			return path.normalize().toRealPath();
+		} catch (final IOException e) {
+			IO.log.error("the just created path couldn't get processed. " + path, e);
+		}
+		return path.normalize();
+	}
+
+	/**
+	 * touch / create a given file relative to the given {@code basePath}
+	 *
+	 * @param basePath the base path where to given file will be touched
+	 * @param fileName the filename
+	 *
+	 * @since 0.7.0
+	 */
+	public static Path touch(final Path basePath, final String fileName) {
+		final Path f = basePath.resolve(fileName);
+		IO.touch(f);
+		return f.normalize();
+	}
+
+	/**
+	 * create directory relative to the given path
+	 *
+	 * @param file     base path
+	 * @param fileName directory name
+	 *
+	 * @return {@code true} if directory was successfully created
+	 *
+	 * @since 0.7.0
+	 */
+	public static Path mkdir(final Path file, final String fileName) {
+		IO.mkdir(file, new String[]{fileName});
+		return file.resolve(fileName).normalize();
+	}
+
+	/**
+	 * create directories relative to the given path
+	 *
+	 * @param file     base path
+	 * @param fileName directory names
+	 *
+	 * @return {@code true} if all directories were successfully created
+	 *
+	 * @since 0.7.0
+	 */
+	public static boolean mkdir(final Path file, final String... fileName) {
+		final AtomicBoolean hasError = new AtomicBoolean(false);
+		Arrays.stream(fileName).forEach(dirName -> {
+			try {
+				Files.createDirectories(file.resolve(dirName));
+			} catch (final IOException e) {
+				IO.log.error("Couldn't create directory " + dirName, e);
+				hasError.set(true);
+			}
+		});
+		return !hasError.get();
+	}
+
+	public static boolean isExecutable(final Path file) {
+		return Files.isExecutable(file);
+	}
+
+	public static boolean isFile(final Path file) {
+		return Files.isRegularFile(file);
 	}
 }

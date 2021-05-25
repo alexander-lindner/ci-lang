@@ -1,7 +1,6 @@
 package org.alindner.cish.lang.functions.predicate;
 
 import org.alindner.cish.extension.annotations.CishPredicate;
-import org.alindner.cish.lang.CiFile;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -14,10 +13,10 @@ import java.util.jar.JarInputStream;
  */
 public class JarPredicate {
 	@CishPredicate("jar")
-	public static Predicate<? super CiFile> isJar() {
+	public static Predicate<? super Path> isJar() {
 		return ciFile -> {
 			try {
-				return new JarInputStream(new FileInputStream(ciFile)).getNextEntry() != null;
+				return new JarInputStream(new FileInputStream(ciFile.toFile())).getNextEntry() != null;
 			} catch (final IOException e) {
 				return false;
 			}
@@ -26,6 +25,6 @@ public class JarPredicate {
 
 	@CishPredicate("jar")
 	public static Predicate<? extends Path> isJarByPath() {
-		return path -> JarPredicate.isJar().test(new CiFile(path.toFile()));
+		return path -> JarPredicate.isJar().test(path);
 	}
 }

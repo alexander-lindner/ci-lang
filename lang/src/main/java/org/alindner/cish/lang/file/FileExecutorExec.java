@@ -1,6 +1,6 @@
 package org.alindner.cish.lang.file;
 
-import org.alindner.cish.lang.CiFile;
+import java.nio.file.Path;
 
 /**
  * interface for lambda usage
@@ -13,5 +13,5 @@ public interface FileExecutorExec {
 	 *
 	 * @param file file
 	 */
-	void doIt(final CiFile file);
+	void doIt(final Path file);
 }

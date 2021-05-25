@@ -1,7 +1,5 @@
 package org.alindner.cish.lang.file;
 
-import org.alindner.cish.lang.CiFile;
-
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Stream;
@@ -22,7 +20,7 @@ public class FileExecutor {
 	 * @see FileExecutorExec
 	 */
 	public void exec(final FileExecutorExec exec) {
-		this.file.forEach(path -> exec.doIt(new CiFile(path.toFile())));
+		this.file.forEach(exec::doIt);
 	}
 
 	/**

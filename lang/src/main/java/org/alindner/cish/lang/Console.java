@@ -42,74 +42,45 @@ public class Console {
 		Console.print(Type.OUTPUT, value.toString());
 	}
 
-	public static void print(final Path value) {
-		Console.print(Type.OUTPUT, value.toString());
-	}
 
 	/**
 	 * print a cish file
 	 *
 	 * @param file file
 	 */
-	public static void print(final CiFile file) {
-		if (file.isFile()) {
+	public static void print(final Path file) {
+		if (IO.isFile(file)) {
 			try {
 				Console.print(
 						Type.OUTPUT,
 						String.format(
 								"[Name:%s, path: %s, size: %s, type: file, executable: %b]",
-								file.getName(),
-								file.getCanonicalPath(),
-								FileUtils.byteCountToDisplaySize(Files.size(file.toPath())),
-								file.executable()
+								file.getFileName(),
+								file.toAbsolutePath().normalize(),
+								FileUtils.byteCountToDisplaySize(Files.size(file)),
+								IO.isExecutable(file)
 						)
 				);
 			} catch (final IOException e) {
 				Log.internal("Couldn't retrieve size");
-				try {
-					Console.print(
-							Type.OUTPUT,
-							String.format(
-									"[Name:%s, path: %s, type: file, executable: %b]",
-									file.getName(),
-									file.getCanonicalPath(),
-									file.executable()
-							)
-					);
-				} catch (final IOException ioException) {
-					Log.internal("Couldn't retrieve cleaned file path");
-					Console.print(
-							Type.OUTPUT,
-							String.format(
-									"[Name:%s, path: %s, type: file, executable: %b]",
-									file.getName(),
-									file.getAbsolutePath(),
-									file.executable()
-							)
-					);
-				}
-			}
-		} else {
-			try {
-				Console.print(
-						Type.OUTPUT,
-						String.format(
-								"[path: %s, type: directory]",
-								file.getCanonicalPath()
-						)
-				);
-			} catch (final IOException e) {
-				Log.internal("Couldn't retrieve cleaned file path");
 				Console.print(
 						Type.OUTPUT,
 						String.format(
 								"[Name:%s, path: %s, type: file, executable: %b]",
-								file.getName(),
-								file.getAbsolutePath(),
-								file.executable()
+								file.getFileName(),
+								file.toAbsolutePath().normalize(),
+								IO.isExecutable(file)
 						)
 				);
 			}
+		} else {
+			Console.print(
+					Type.OUTPUT,
+					String.format(
+							"[path: %s, type: directory]",
+							file.toAbsolutePath().normalize()
+					)
+			);
 		}
 	}
 

@@ -49,9 +49,9 @@ public class Parameter {
 	 *
 	 * @return cish interpreter
 	 */
-	public static CiFile getCish() {
+	public static Path getCish() {
 		try {
-			return new CiFile(
+			return Path.of(
 					Parameter.class.getProtectionDomain()
 					               .getCodeSource()
 					               .getLocation()
@@ -61,7 +61,7 @@ public class Parameter {
 		} catch (final URISyntaxException e) {
 			Log.fatal("Couldn't parse path to cish executable", e);
 		}
-		return new CiFile("");
+		return Path.of(".");
 	}
 
 	/**

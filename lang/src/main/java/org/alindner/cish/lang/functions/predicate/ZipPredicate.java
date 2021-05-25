@@ -1,7 +1,6 @@
 package org.alindner.cish.lang.functions.predicate;
 
 import org.alindner.cish.extension.annotations.CishPredicate;
-import org.alindner.cish.lang.CiFile;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -14,10 +13,10 @@ import java.util.zip.ZipInputStream;
  */
 public class ZipPredicate {
 	@CishPredicate("zip")
-	public static Predicate<? super CiFile> isZip() {
+	public static Predicate<? super Path> isZip() {
 		return ciFile -> {
 			try {
-				return new ZipInputStream(new FileInputStream(ciFile)).getNextEntry() != null;
+				return new ZipInputStream(new FileInputStream(ciFile.toFile())).getNextEntry() != null;
 			} catch (final IOException e) {
 				return false;
 			}
@@ -26,6 +25,6 @@ public class ZipPredicate {
 
 	@CishPredicate("zip")
 	public static Predicate<? extends Path> isZipByPath() {
-		return path -> ZipPredicate.isZip().test(new CiFile(path.toFile()));
+		return path -> ZipPredicate.isZip().test(path);
 	}
 }

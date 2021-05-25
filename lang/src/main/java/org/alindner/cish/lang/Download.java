@@ -5,6 +5,7 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Path;
 
 /**
  * A class for download handling
@@ -22,11 +23,11 @@ public class Download {
 	 *
 	 * @return CiFile representation
 	 */
-	public static CiFile url(final String url) {
-		final CiFile f = IO.createTempDir();
+	public static Path url(final String url) {
+		final Path f = IO.createTempDir();
 		try {
-			final CiFile target = new CiFile(f, new CiFile(new URL(url).getFile()).getName());
-			FileUtils.copyURLToFile(new URL(url), target);
+			final Path target = f.resolve(new URL(url).getFile()).getFileName();
+			FileUtils.copyURLToFile(new URL(url), target.toFile());
 			return target;
 		} catch (final IOException ioException) {
 			Download.log.error("Could not download file to tempdir", ioException);
@@ -42,7 +43,7 @@ public class Download {
 	 *
 	 * @return CiFile representation
 	 */
-	public static CiFile maven(final String artifactId, final String version) {
+	public static Path maven(final String artifactId, final String version) {
 		return Download.url(String.format("https://repo1.maven.org/maven2/%s/%s/%s/%s-%s.jar", artifactId, artifactId, version, artifactId, version));
 	}
 }

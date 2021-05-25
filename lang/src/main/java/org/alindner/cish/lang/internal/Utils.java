@@ -1,9 +1,10 @@
 package org.alindner.cish.lang.internal;
 
-import org.alindner.cish.lang.CiFile;
+import org.alindner.cish.lang.IO;
 
 import java.io.File;
 import java.math.BigInteger;
+import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -11,7 +12,7 @@ import java.security.NoSuchAlgorithmException;
  * some common used methods for mainly internal use
  */
 public class Utils {
-	static final File root = new File("./.cish/cache/compiled");
+	static final Path root = Path.of("./.cish/cache/compiled");
 
 	/**
 	 * get the cached base dir of the cish file
@@ -20,10 +21,8 @@ public class Utils {
 	 *
 	 * @return cached dir
 	 */
-	public static CiFile getCompileDirOfShellScript(final File file) {
-		final CiFile sourceFile = new CiFile(Utils.root, String.format("p%s", Utils.hash(file.getAbsoluteFile().getName())));
-		sourceFile.mkdirs();
-		return sourceFile;
+	public static Path getCompileDirOfShellScript(final File file) {
+		return IO.mkdir(Utils.root, String.format("p%s", Utils.hash(file.getAbsoluteFile().getName())));
 	}
 
 	/**

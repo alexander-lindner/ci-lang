@@ -3,6 +3,7 @@ package org.alindner.cish.lang;
 import lombok.Data;
 import org.alindner.cish.extension.annotations.CishExtension;
 
+import java.nio.file.Path;
 import java.util.StringJoiner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -71,7 +72,7 @@ public class Regex {
 	 *
 	 * @return replaced string
 	 */
-	public String replaceAll(final CiFile baseFile, final String replacement) {
+	public String replaceAll(final Path baseFile, final String replacement) {
 		return this.replaceAll(baseFile.toString(), replacement);
 	}
 
@@ -95,7 +96,7 @@ public class Regex {
 	 *
 	 * @return extracted string
 	 */
-	public String extract(final CiFile file, final int i) {
+	public String extract(final Path file, final int i) {
 		return this.extract(file.toString(), i);
 	}
 
