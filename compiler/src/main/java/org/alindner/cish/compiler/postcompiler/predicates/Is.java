@@ -2,6 +2,7 @@ package org.alindner.cish.compiler.postcompiler.predicates;
 
 import lombok.extern.log4j.Log4j2;
 
+import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -40,10 +41,16 @@ public class Is {
 								                     Map.Entry::getValue
 						                     )
 				                     );
+
 		if (res.containsKey(predicate)) {
-			final Map<Class<?>, Supplier<Predicate<?>>> predObj = res.get(predicate);
-			if (predObj.containsKey(obj.getClass())) {
-				final Predicate<T> pred = (Predicate<T>) predObj.get(obj.getClass()).get();
+			final List<Supplier<Predicate<?>>> result = res.get(predicate)
+			                                               .entrySet()
+			                                               .stream()
+			                                               .filter(classSupplierEntry -> classSupplierEntry.getKey().isAssignableFrom(obj.getClass()))
+			                                               .map(Map.Entry::getValue)
+			                                               .collect(Collectors.toList());
+			if (result.size() > 0) {
+				final Predicate<T> pred = (Predicate<T>) result.get(0).get();
 				return pred.test(obj);
 			}
 		}

@@ -1,8 +1,12 @@
 package org.alindner.cish.lang;
 
 import org.alindner.cish.compiler.postcompiler.predicates.Is;
+import org.alindner.cish.compiler.postcompiler.predicates.Predicates;
+import org.alindner.cish.lang.functions.predicate.JarPredicate;
+import org.alindner.cish.lang.functions.predicate.ZipPredicate;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -12,6 +16,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -19,6 +24,12 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.*;
 
 class IOTest {
+
+	@BeforeAll
+	static void setup() {
+		Predicates.addPredicate("zip", Map.of(Path.class, ZipPredicate::isZip));
+		Predicates.addPredicate("jar", Map.of(Path.class, JarPredicate::isJar));
+	}
 
 	@Test
 	void toOctal() {
@@ -68,9 +79,8 @@ class IOTest {
 		IO.touch(tmpFile.toAbsolutePath() + "/test/test2/test2.sh");
 		IO.touch(tmpFile.toAbsolutePath() + "/test/test2/test3.sh");
 		IO.touch(tmpFile.toAbsolutePath() + "/test/test2/test4.shs");
-
-		IO.findFiles(tmpFile, "(.*)\\.sh").exec(file -> assertTrue(file.endsWith(".sh")));
-		IO.findFiles(tmpFile, "(.*)\\.shs").exec(file -> assertTrue(file.endsWith(".shs")));
+		IO.findFiles(tmpFile, "(.*)\\.sh").exec(file -> assertTrue(file.toString().endsWith(".sh")));
+		IO.findFiles(tmpFile, "(.*)\\.shs").exec(file -> assertTrue(file.toString().endsWith(".shs")));
 
 		final AtomicInteger counterSh = new AtomicInteger();
 		IO.findFiles(tmpFile, "(.*)\\.sh").exec(file -> counterSh.getAndIncrement());
@@ -124,7 +134,8 @@ class IOTest {
 
 	@Test
 	void testExecutable() {
-		final Path tmpFile = IO.createTempDir().resolve("testfile.txt");
+		final Path tmpFile;
+		IO.touch(tmpFile = IO.createTempDir().resolve("testfile.txt"));
 		IO.chown(IO.currentUser(), null, tmpFile);
 		try {
 			assertEquals(IO.currentUser(), Files.getOwner(tmpFile).getName());

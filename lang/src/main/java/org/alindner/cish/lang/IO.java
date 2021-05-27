@@ -245,11 +245,21 @@ public class IO {
 	 * @return CiFile representation of the destination path
 	 */
 	public static Path copy(final Path src, final Path dest) {
-		if (IO.isDirectory(dest)) {
-			IO.copyFolder(src, Paths.get(dest.toString(), src.getFileName().toString()));
+		if (IO.isDirectory(src)) {
+			if (IO.isDirectory(dest)) {
+				IO.copyFolder(src, Paths.get(dest.toString(), src.getFileName().toString()));
+			} else {
+				IO.mkdir(Paths.get(dest.toString(), src.getFileName().toString()));
+				IO.copyFolder(src, dest);
+			}
+
 			return dest.resolve(src.getFileName());
 		} else {
-			IO.copyFolder(src, dest);
+			try {
+				Files.copy(src, dest);
+			} catch (final IOException e) {
+				e.printStackTrace();
+			}
 			return dest;
 		}
 	}
@@ -284,12 +294,16 @@ public class IO {
 	 *
 	 * @param src  source path
 	 * @param dest destination path
-	 *
-	 * @todo
 	 */
 	private static void copyFolder(final Path src, final Path dest) {
 		try (final Stream<Path> stream = Files.walk(src)) {
-			stream.forEach(source -> IO.copy(source, dest.resolve(src.relativize(source))));
+			stream.forEach(source -> {
+				try {
+					Files.copy(source, dest.resolve(src.relativize(source)));
+				} catch (final IOException e) {
+					Log.fatal(String.format("Couldn't copy the folder '%s' to '%s'", src, dest), e);
+				}
+			});
 		} catch (final IOException e) {
 			Log.fatal(String.format("Couldn't copy the folder '%s' to '%s'", src, dest), e);
 		}
