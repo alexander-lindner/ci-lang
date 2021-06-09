@@ -9,14 +9,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1.1.0
+        uses: docker/setup-qemu-action@v1.2.0
       - name: Set up JDK
         uses: actions/setup-java@v2
         with:
           distribution: 'zulu'
           java-version: 15
       - name: Cache local Maven repository
-        uses: actions/cache@v2.1.5
+        uses: actions/cache@v2.1.6
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
@@ -38,7 +38,7 @@ jobs:
           ./mvnw -DskipTests -Dversioning.disable=true -B clean package install javadoc:javadoc javadoc:aggregate
 
       - name: Deploy doc 🚀
-        uses: JamesIves/github-pages-deploy-action@4.1.3
+        uses: JamesIves/github-pages-deploy-action@4.1.4
         with:
           #          token: ${{ secrets.GITHUB_TOKEN }}
           branch: gh-pages
