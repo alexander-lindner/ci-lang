@@ -25,5 +25,5 @@ Console::print(stars2)
 
 
 
-#include("include.cish")
+include("include.cish")
 `System.out.println(IOUtils.DIR_SEPARATOR_WINDOWS);`

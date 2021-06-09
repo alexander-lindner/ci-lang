@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
  * @since 0.7.0
  */
 @Log4j2
-@CishExtension("0.2")
+@CishExtension("0.7.0")
 public class Maven {
 	private static final Path home            = Path.of(System.getProperty("user.home"));
 	private static final Path cacheRepository = Maven.home.resolve(".cish/cache/mvn/local_repository");

@@ -16,7 +16,7 @@ import java.util.Map;
  * @author alindner
  * @since 0.3.2
  */
-@CishExtension("0.2")
+@CishExtension("0.7.0")
 public class Parameter {
 	/**
 	 * the parameter like -version

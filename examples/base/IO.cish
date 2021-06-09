@@ -1,19 +1,23 @@
 #!/bin/cish
-
-HOME = IO::currentDir()
-BASE = HOME.parent()
+########### BASE paths ###########
+currentDir = IO::currentDir()
+USER_HOME = IO::home()
 TMPDIR = IO::createTempDir()
-GPG_AGENT = IO::createDir(TMPDIR+"/gpg_agent_home/")
 
-theFile = new CiFile("target")
-if(theFile.~Zip()) {
-  Log::println("Hi")
+HOME = USER_HOME.getParent() // should be /home
+if(HOME == "/home") {
+     Log::println(USER_HOME);
 }
+backupDir = IO::createDir(TMPDIR+"/backupDir/")
 
-Console::print("---- BUILDER ----")
+cishLibDir = IO::of("/usr/lib/cish/")
+IO::findFile(cishLibDir).exec(file -> {
+    if(file.~Zip() && file.~Jar()) {
+        Log::println(file)
+        IO::copy(file, backupDir)
+    }
+})
 
-IO::copy(HOME + "/.idea/", GPG_AGENT+ "/")
-IO::chown(IO::currentUser(), null, GPG_AGENT );
 IO::findDir(GPG_AGENT).exec(file -> {
   try {
     IO::chmod(070, file)
@@ -32,23 +36,23 @@ IO::findFile(GPG_AGENT).exec(file -> {
 
 Console::print(GPG_AGENT);
 
-#IO::listFiles("./target").each("test");
-#IO::listFiles("./target");
-#
-#
-#IO::listFiles("./target").each((file) => {
-#  if(file.isExecutable()) {
-#    file.delete();
-#  }
-#});
-#
-#IO::listFiles.each((file) => {
-#  if(file.isExecutable()) {
-#    file.delete();
-#  }
-#});
-#IO::listFiles("./target").each({
-#  if(it.isExecutable()) {
-#    it.delete();
-#  }
-#});
+IO::listFiles("./target").each("test");
+IO::listFiles("./target");
+
+
+IO::listFiles("./target").each((file) => {
+  if(file.isExecutable()) {
+    file.delete();
+  }
+});
+
+IO::listFiles.each((file) => {
+  if(file.isExecutable()) {
+    file.delete();
+  }
+});
+IO::listFiles("./target").each({
+  if(it.isExecutable()) {
+    it.delete();
+  }
+});

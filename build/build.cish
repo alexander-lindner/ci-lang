@@ -1,5 +1,5 @@
 #!/bin/cish
-mvn = Maven::builder().parameter("skipTests").parameter("versioning.disable").build();
+mvn=Maven::builder().parameter("skipTests").parameter("versioning.disable").build();
 
 
 INTERPRETER="./build/target/cish"

@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
  * @since 0.7.0
  */
 @Log4j2
-@CishExtension("0.2")
+@CishExtension("0.7.0")
 public class Bash {
 	/**
 	 * run a simple bash script

@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * Interaction to the console / screen
  */
-@CishExtension("0.2")
+@CishExtension("0.7.0")
 public class Console {
 	/**
 	 * print a string

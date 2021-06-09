@@ -12,7 +12,7 @@ import java.net.URLClassLoader;
 /**
  * A collection of utils function which gets internal used todo is this still needed?
  */
-@CishExtension("0.2")
+@CishExtension("0.7.0")
 public class CishUtils {
 	/**
 	 * include and execute another cish file

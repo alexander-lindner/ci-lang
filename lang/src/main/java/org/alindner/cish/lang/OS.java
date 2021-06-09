@@ -9,7 +9,7 @@ import java.net.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@CishExtension("0.2")
+@CishExtension("0.7.0")
 @Log4j2
 public class OS {
 	private static final Map<String, String> infos = new HashMap<>();

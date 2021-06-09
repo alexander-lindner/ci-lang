@@ -3,7 +3,7 @@
     <option name="INCLUDE_PROVIDED_SCOPE" value="true" />
     <option name="MAIN_CLASS_NAME" value="org.alindner.cish.interpreter.Interpreter" />
     <module name="interpreter" />
-    <option name="PROGRAM_PARAMETERS" value="./examples/full/full.cish -l debug --test=ales --alex=lol -n 5 -p 55 d s 58" />
+    <option name="PROGRAM_PARAMETERS" value="./examples/base/IO.cish -l debug --test=ales --alex=lol -n 5 -p 55 d s 58" />
     <option name="VM_PARAMETERS" value="--add-modules ALL-MODULE-PATH,ALL-SYSTEM" />
     <extension name="coverage">
       <pattern>

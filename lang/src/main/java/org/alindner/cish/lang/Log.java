@@ -6,7 +6,7 @@ import org.alindner.cish.extension.annotations.CishExtension;
 /**
  * the log and print class of all included classes
  */
-@CishExtension("0.2")
+@CishExtension("0.7.0")
 @Log4j2
 public class Log {
 	static boolean stopOnError = true;

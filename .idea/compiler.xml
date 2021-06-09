@@ -10,10 +10,10 @@
         <processorPath useClasspath="false">
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.20/lombok-1.18.20.jar" />
         </processorPath>
-        <module name="extension" />
         <module name="interpreter" />
-        <module name="compiler" />
+        <module name="extension" />
         <module name="lang" />
+        <module name="compiler" />
       </profile>
       <profile name="Maven default annotation processors profile" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />

@@ -13,7 +13,6 @@ import java.nio.file.attribute.*;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -23,11 +22,27 @@ import java.util.stream.Stream;
  * @author alindner
  * @since 0.5.3
  */
-@CishExtension("0.2")
+@CishExtension("0.7.0")
 @Log4j2
 public class IO {
+	private static final Path home       = Path.of(System.getProperty("user.home"));
+	private static final Path currentDir = Path.of(System.getProperty("user.dir"));
+
+	/**
+	 * @param path
+	 * @param paths
+	 *
+	 * @return
+	 */
 	public static Path of(final String path, final String... paths) {
 		return Path.of(path, paths).normalize();
+	}
+
+	/**
+	 * @return
+	 */
+	public static Path home() {
+		return IO.home;
 	}
 
 	/**
@@ -233,7 +248,7 @@ public class IO {
 	 * @return current directory
 	 */
 	public static Path currentDir() {
-		return Path.of(System.getProperty("user.dir"));
+		return IO.currentDir;
 	}
 
 	/**
@@ -249,7 +264,6 @@ public class IO {
 			if (IO.isDirectory(dest)) {
 				IO.copyFolder(src, Paths.get(dest.toString(), src.getFileName().toString()));
 			} else {
-				IO.mkdir(Paths.get(dest.toString(), src.getFileName().toString()));
 				IO.copyFolder(src, dest);
 			}
 
@@ -524,10 +538,10 @@ public class IO {
 	}
 
 	/**
-	 * convert a number, given as char, to it's unix octal permission representation.
+	 * converts a number, given as char, to it's unix octal permission representation.
 	 * <p>
-	 * this number can be shown by using `ls -l` and  stat -c '%a %n' *` or `ls -l | awk '{k=0;for(i=0;i&lt;=8;i++)k+=((substr($1,i+2,1)~/[rwx]/) 2^(8-i));if(k)printf("%0o
-	 * ",k);print}'`
+	 * this number can be shown by using <pre>ls -l</pre> and <pre>stat -c '%a %n' *</pre> or
+	 * <pre>ls -l | awk '{k=0;for(i=0;i&lt;=8;i++)k+=((substr($1,i+2,1)~/[rwx]/) 2^(8-i));if(k)printf("%0o",k);print}'</pre>
 	 *
 	 * @param charAt number representation
 	 *
@@ -598,16 +612,6 @@ public class IO {
 		return true;
 	}
 
-	private static FileExecutor findFiles(final String path, final Predicate<? super Path> predicate) {
-		return new FileExecutor(
-				IO.listFiles(path)
-				  .asList()
-				  .stream()
-				  .filter(predicate)
-				  .collect(Collectors.toList())
-		);
-	}
-
 	/**
 	 * Tests whether a file is a directory.
 	 *
@@ -668,15 +672,28 @@ public class IO {
 		IO.touch(Path.of(file), timestamp);
 	}
 
-
+	/**
+	 * Create a non existing path as file and returns the absolute path.
+	 * <p>
+	 * it will create any parent directories if needed
+	 *
+	 * @param path file path
+	 *
+	 * @return the normalised, absolute file path
+	 *
+	 * @since 0.7.0
+	 */
 	public static Path createAsFile(final Path path) {
+		if (!IO.isDirectory(path.getParent())) {
+			IO.mkdir(path.getParent());
+		}
 		IO.touch(path);
 		try {
-			return path.normalize().toRealPath();
+			return path.toAbsolutePath().normalize().toRealPath();
 		} catch (final IOException e) {
 			IO.log.error("the just created path couldn't get processed. " + path, e);
 		}
-		return path.normalize();
+		return path.toAbsolutePath().normalize();
 	}
 
 	/**
@@ -731,10 +748,30 @@ public class IO {
 		return !hasError.get();
 	}
 
+	/**
+	 * Checks if a file is executable
+	 *
+	 * @param file path to file
+	 *
+	 * @return {@code true}, if the file is executable
+	 *
+	 * @see Files#isExecutable(Path)
+	 * @since 0.7.0
+	 */
 	public static boolean isExecutable(final Path file) {
 		return Files.isExecutable(file);
 	}
 
+	/**
+	 * Checks if a file exists and is not a directory
+	 *
+	 * @param file path to file
+	 *
+	 * @return {@code true}, if the file exists
+	 *
+	 * @see Files#isRegularFile(Path, LinkOption...)
+	 * @since 0.7.0
+	 */
 	public static boolean isFile(final Path file) {
 		return Files.isRegularFile(file);
 	}

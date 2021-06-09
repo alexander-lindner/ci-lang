@@ -8,7 +8,7 @@ import org.alindner.cish.lang.structures.ControlBodySimple;
 /**
  * Wraps java control structures like if to an object
  */
-@CishExtension("0.2")
+@CishExtension("0.7.0")
 public class ControlStructures {
 	/**
 	 * for each loop

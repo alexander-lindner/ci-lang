@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
  * @author alindner
  * @since 0.3.5
  */
-@CishExtension("0.2")
+@CishExtension("0.7.0")
 @Data
 public class Regex {
 	private final Pattern regex;

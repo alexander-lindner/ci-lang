@@ -11,7 +11,7 @@ import java.util.Arrays;
  *
  * @author alindner
  */
-@CishExtension("0.2")
+@CishExtension("0.7.0")
 public class Thread {
 	/**
 	 * run code in a simple, asynchronous way
