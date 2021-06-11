@@ -6,14 +6,14 @@ TMPDIR = IO::createTempDir()
 
 HOME = USER_HOME.getParent() // should be /home
 if(HOME == "/home") {
-     Log::println(USER_HOME);
+     Console::print(USER_HOME);
 }
 backupDir = IO::createDir(TMPDIR+"/backupDir/")
 
-cishLibDir = IO::of("/usr/lib/cish/")
-IO::findFile(cishLibDir).exec(file -> {
+cishLibDir = IO::of("/usr/lib/")
+IO::listFiles(cishLibDir).exec(file -> {
     if(file.~Zip() && file.~Jar()) {
-        Log::println(file)
+        Console::print(file)
         IO::copy(file, backupDir)
     }
 })

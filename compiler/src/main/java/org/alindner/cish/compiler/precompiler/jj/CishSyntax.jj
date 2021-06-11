@@ -93,6 +93,12 @@ TOKEN:
 | < DOUBLE_ARROW: "=>" >
 | < ARROW: "->" >
 | < PLUS: "+" >
+| < CEQUALS: "==" >
+| < CNOTEQUALS: "!=" >
+| < CHIGHER: ">" >
+| < CHIGHEREQUALS: ">=" >
+| < CLOWER: "<" >
+| < CLOWEREQUALS: "<=" >
 | < ID: ["a"-"z","A"-"Z"] ( ["a"-"z","A"-"Z","_","0"-"9"] )* >
 }
 TOKEN_MGR_DECLS :
@@ -511,21 +517,15 @@ String ifElse() :
 {
     <IF> <LEFT_PAREN> cond = condition() <RIGHT_PAREN> [<EOL>] <LEFT_BRACE> [<EOL>] {n.append("ControlStructures.when(").append(cond).append(", () -> {");}
     (
-        (
-	    s = ifElse() {n.append(s).append(";");}
-        |
-        s = line() {n.append(s).append(";");}
-        ) [<EOL>]
+         s = line() {n.append(s).append(";");}
+        [<EOL>]
     )*  {n.append("}");}
     <RIGHT_BRACE> [<EOL>]
     (
         <ELSE> [<EOL>] <LEFT_BRACE> [<EOL>] {n.append(", () -> {");}
         (
-            (
-            s = ifElse() {n.append(s).append(";");}
-            |
             s = line() {n.append(s).append(";");}
-            ) [<EOL>]
+            [<EOL>]
         )*  {n.append("}");}
         <RIGHT_BRACE> [<EOL>]
     )?
@@ -535,10 +535,30 @@ String ifElse() :
 String condition():
 {
       String s = "";
+      String c = "";
+      String tmp = "";
+      Token t;
 }
 {
-    s = line()
-    {return s;}
+    (
+        (
+            c=parameter() {s="ControlStructures.Condition.evaluate("+c;}
+            (
+               t= <CEQUALS> {tmp= "ControlStructures.Condition.ConditionType.EQUALS";}
+               | t=<CNOTEQUALS>  {tmp= "ControlStructures.Condition.ConditionType.NOTEQUALS";}
+               | t=<CLOWER>  {tmp= "ControlStructures.Condition.ConditionType.LOWER";}
+               | t=<CLOWEREQUALS>  {tmp= "ControlStructures.Condition.ConditionType.LOWEREQUAL";}
+               | t=<CHIGHER>  {tmp= "ControlStructures.Condition.ConditionType.HIGHER";}
+               | t=<CHIGHEREQUALS>  {tmp= "ControlStructures.Condition.ConditionType.HIGEREQUAL";}
+            )
+            c=parameter() {s+=", " +c + ", "+tmp + ")";}
+        )
+        |
+        (
+             s = parameter()
+        )
+    )
+     {return s;}
 }
 
 String namespace():

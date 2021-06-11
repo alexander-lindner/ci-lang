@@ -59,6 +59,24 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.0.0</version>
+                <configuration>
+                    <executable>java</executable>
+                    <arguments>
+                        <argument>--add-modules</argument>
+                        <argument>ALL-MODULE-PATH,ALL-SYSTEM</argument>
+                        <argument>--module-path</argument> <!-- or -p  -->
+                        <!-- automatically creates the modulepath using all project dependencies,
+                             also adding the project build directory -->
+                        <modulepath/>
+                        <argument>--module</argument> <!-- or -m -->
+                        <argument>cish.interpreter/org.alindner.cish.interpreter.Interpreter</argument>
+                    </arguments>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <version>3.1.2</version>
