@@ -18,7 +18,7 @@ import java.net.URL;
 @Data
 public class DependenciesMetaInfo implements Serializable {
 	private static final long serialVersionUID = -5589457210110234087L;
-	URL url;
+	URL     url;
 	Version version;
 	Type    type;
 }

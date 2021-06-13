@@ -4,6 +4,8 @@ import lombok.extern.log4j.Log4j2;
 import org.alindner.cish.compiler.postcompiler.extension.DependenciesMetaInfo;
 import org.alindner.cish.compiler.postcompiler.extension.FileInfo;
 import org.alindner.cish.compiler.postcompiler.predicates.Predicates;
+import org.alindner.cish.compiler.utils.CishPath;
+import org.alindner.cish.compiler.utils.Utils;
 import org.alindner.cish.extension.Type;
 import org.alindner.cish.extension.Version;
 import org.alindner.cish.extension.annotations.*;
@@ -12,11 +14,14 @@ import org.reflections.scanners.*;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -35,9 +40,35 @@ import java.util.stream.Collectors;
  */
 @Log4j2
 public class DependencyWorker implements Callable<DependencyWorker> {
-	private final static List<String>   objList          = Arrays.stream(Object.class.getMethods()).map(Method::getName).distinct().collect(Collectors.toList());
-	private final        List<FileInfo> dependenciesList = new ArrayList<>();
-	private final        Path           file;
+	private final static List<String> objList = Arrays.stream(Object.class.getMethods()).map(Method::getName).distinct().collect(Collectors.toList());
+	static               Path         executable;
+	static {
+		DependencyWorker.executable = Arrays.stream(System.getenv("PATH").split(":"))
+		                                    .map(Path::of)
+		                                    .map(Path::normalize)
+		                                    .map(path -> {
+			                                    try {
+				                                    return path.toRealPath();
+			                                    } catch (final IOException ignored) {
+				                                    return null;
+			                                    }
+		                                    })
+		                                    .filter(Objects::nonNull)
+		                                    .map(path -> path.resolve("mvn").normalize())
+		                                    .map(path -> {
+			                                    try {
+				                                    return path.toRealPath();
+			                                    } catch (final IOException ignored) {
+				                                    return null;
+			                                    }
+		                                    })
+		                                    .filter(Objects::nonNull)
+		                                    .findFirst()
+		                                    .orElseThrow(() -> new Error("Couldn't find maven executable"));
+
+	}
+	private final List<FileInfo> dependenciesList = new ArrayList<>();
+	private final Path           file;
 
 	public DependencyWorker(final Path file) {
 		this.file = file;
@@ -54,28 +85,17 @@ public class DependencyWorker implements Callable<DependencyWorker> {
 	 */
 	private static DependenciesMetaInfo buildMavenDependency(final MavenDependency mavenDependency) throws MalformedURLException {
 		DependencyWorker.log.debug("Found a MavenDependencies dependency");
-		final URL u = new URL(
-				String.format(
-						"https://repo1.maven.org/maven2/%s/%s/%s/%s-%s.jar",
-						String.join("/", mavenDependency.value().split("\\.")),
-						mavenDependency.name(),
-						mavenDependency.version(),
-						mavenDependency.name(),
-						mavenDependency.version()
-				)
-		);
-
+		final Path basePath = DependencyWorker.buildPom(mavenDependency.value(), mavenDependency.name(), mavenDependency.version());
 
 		final DependenciesMetaInfo dep = DependenciesMetaInfo
 				.builder()
 				.type(mavenDependency.type())
-				.url(u)
+				.url(basePath.toUri().toURL())
 				.version(new Version(mavenDependency.version()))
 				.build();
 		DependencyWorker.log.debug("added dependency: {}", () -> dep);
 		return dep;
 	}
-
 
 	/**
 	 * build a meta info object based on a url.
@@ -129,6 +149,57 @@ public class DependencyWorker implements Callable<DependencyWorker> {
 	}
 
 	/**
+	 * Generate a pom file for simple loading of the dependencies.
+	 * <p>
+	 * This a fast and easy implementation, however a java only variant would be better.
+	 *
+	 * @param groupId    maven groupid
+	 * @param artifactId maven artifactid
+	 * @param version    maven version
+	 *
+	 * @return Url to jar file with it's dependencies next to the jar file
+	 */
+	static Path buildPom(final String groupId, final String artifactId, final String version) {
+		final String hash = Utils.hash(String.format("%s:%s:%s", groupId, artifactId, version));
+		final Path   base = CishPath.ofTmp("downloads").resolve(hash);
+
+		try {
+			if (!Files.isDirectory(base)) {
+				Files.createDirectories(base);
+			}
+			if (!Files.isRegularFile(base.resolve("pom.xml"))) {
+				final String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+				                   "<project xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+				                   "         xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
+				                   "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
+				                   "    <modelVersion>4.0.0</modelVersion>\n" +
+				                   "    <groupId>" + hash + "</groupId>\n" +
+				                   "    <artifactId>demoExtension</artifactId>\n" +
+				                   "    <version>0.0.1</version>\n" +
+				                   "    <dependencies>\n" +
+				                   "        <dependency>\n" +
+				                   "            <groupId>" + groupId + "</groupId>\n" +
+				                   "            <artifactId>" + artifactId + "</artifactId>\n" +
+				                   "            <version>" + version + "</version>\n" +
+				                   "        </dependency>\n" +
+				                   "    </dependencies>\n" +
+				                   "</project>";
+				Files.write(base.resolve("pom.xml"), xml.getBytes(StandardCharsets.UTF_8));
+			}
+			final ProcessBuilder pb = new ProcessBuilder(DependencyWorker.executable.toString(), "-DoutputDirectory=./", "dependency:copy-dependencies");
+			pb.environment().put("JAVA_HOME", System.getProperty("java.home"));
+			pb.directory(base.toFile());
+			final Process p = pb.start();
+
+			p.waitFor();
+		} catch (final InterruptedException | IOException e) {
+			DependencyWorker.log.error(String.format("Couldn't download dependencies. GroupId: %s, ArtifactID: %s, version: %s", groupId, artifactId, version), e);
+		}
+		return base.resolve(String.format("%s-%s.jar", artifactId, version));
+
+	}
+
+	/**
 	 * get all dependencies a method relies on
 	 *
 	 * @param method method
@@ -138,20 +209,29 @@ public class DependencyWorker implements Callable<DependencyWorker> {
 	private List<DependenciesMetaInfo> buildMethodDependenciesList(final Method method) {
 		final List<DependenciesMetaInfo> dependencies = new ArrayList<>();
 		try {
-			if (method.isAnnotationPresent(MavenDependencies.class)) {
-				for (final MavenDependency mavenDependency : method.getAnnotation(MavenDependencies.class).value()) {
+			for (final MavenDependencies mavenDependencies : method.getAnnotationsByType(MavenDependencies.class)) {
+				for (final MavenDependency mavenDependency : mavenDependencies.value()) {
 					dependencies.add(DependencyWorker.buildMavenDependency(mavenDependency));
 				}
+			}
+			for (final MavenDependency mavenDependency : method.getAnnotationsByType(MavenDependency.class)) {
+				dependencies.add(DependencyWorker.buildMavenDependency(mavenDependency));
 			}
 			if (method.isAnnotationPresent(JarDependencies.class)) {
 				for (final JarDependency jarDependency : method.getAnnotation(JarDependencies.class).value()) {
 					dependencies.add(DependencyWorker.buildJarDependency(jarDependency));
 				}
 			}
+			for (final JarDependency jarDependency : method.getAnnotationsByType(JarDependency.class)) {
+				dependencies.add(DependencyWorker.buildJarDependency(jarDependency));
+			}
 			if (method.isAnnotationPresent(JavaDependencies.class)) {
 				for (final JavaDependency javaDependency : method.getAnnotation(JavaDependencies.class).value()) {
 					dependencies.add(DependencyWorker.buildJavaDependency(javaDependency));
 				}
+			}
+			for (final JavaDependency javaDependency : method.getAnnotationsByType(JavaDependency.class)) {
+				dependencies.add(DependencyWorker.buildJavaDependency(javaDependency));
 			}
 		} catch (final MalformedURLException e) {
 			DependencyWorker.log.error(String.format(
@@ -208,21 +288,20 @@ public class DependencyWorker implements Callable<DependencyWorker> {
 
 				final List<String> providedClasses = new ArrayList<>();
 				providedClasses.add(currentClass.getCanonicalName());
-
+//todo
 				DependencyWorker.log.debug("Search for dependencies");
 				final List<DependenciesMetaInfo> dependencies = new ArrayList<>();
 				if (currentClass.isAnnotationPresent(MavenDependency.class)) {
-
 					for (final MavenDependency mavenDependency : currentClass.getAnnotationsByType(MavenDependency.class)) {
 						dependencies.add(DependencyWorker.buildMavenDependency(mavenDependency));
 					}
 				}
-				if (currentClass.isAnnotationPresent(JarDependencies.class)) {
+				if (currentClass.isAnnotationPresent(JarDependency.class)) {
 					for (final JarDependency jarDependency : currentClass.getAnnotationsByType(JarDependency.class)) {
 						dependencies.add(DependencyWorker.buildJarDependency(jarDependency));
 					}
 				}
-				if (currentClass.isAnnotationPresent(JavaDependencies.class)) {
+				if (currentClass.isAnnotationPresent(JavaDependency.class)) {
 					DependencyWorker.log.debug("Found a JavaDependency dependency");
 					for (final JavaDependency javaDependency : currentClass.getAnnotationsByType(JavaDependency.class)) {
 						dependencies.add(DependencyWorker.buildJavaDependency(javaDependency));
@@ -233,7 +312,9 @@ public class DependencyWorker implements Callable<DependencyWorker> {
 				final List<String> methods = new ArrayList<>();
 				for (final Method method : currentClass.getMethods()) {
 					final List<DependenciesMetaInfo> deps = this.buildMethodDependenciesList(method);
-					DependencyWorker.log.debug("Found the following dependency list: {}", () -> deps);
+					if (!deps.isEmpty()) {
+						DependencyWorker.log.debug("Found the following dependency list: {}", () -> deps);
+					}
 					dependencies.addAll(deps);
 					methods.add(method.getName());
 				}
@@ -259,7 +340,9 @@ public class DependencyWorker implements Callable<DependencyWorker> {
 				final List<String>  classes    = List.of(annotation.getClass().getCanonicalName());
 				DependencyWorker.log.debug("Found the following conflicts list: {}", () -> classes);
 				final List<DependenciesMetaInfo> deps = this.buildMethodDependenciesList(method);
-				DependencyWorker.log.debug("Found the following dependency list: {}", () -> deps);
+				if (!deps.isEmpty()) {
+					DependencyWorker.log.debug("Found the following dependency list: {}", () -> deps);
+				}
 				final FileInfo entry;
 				this.dependenciesList.add(
 						entry = FileInfo.builder()

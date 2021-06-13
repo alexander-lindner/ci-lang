@@ -9,8 +9,8 @@ import java.io.Serializable;
  * @since 0.7.0
  */
 public class Version implements Comparable<Version>, Serializable {
-	private static final long serialVersionUID = -4116953541942872757L;
-	private final String version;
+	private static final long   serialVersionUID = -4116953541942872757L;
+	private final        String version;
 
 	/**
 	 * Constructor.
@@ -25,7 +25,7 @@ public class Version implements Comparable<Version>, Serializable {
 			version = String.valueOf(Integer.MAX_VALUE);
 		}
 		if (!version.matches("[0-9]+(\\.[0-9]+)*")) {
-			throw new IllegalArgumentException(String.format("Invalid version format: %s", version));
+			throw new IllegalArgumentException(String.format("Invalid version format: %s", version)); //todo
 		}
 		this.version = version;
 	}

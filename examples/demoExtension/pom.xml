@@ -10,7 +10,7 @@
         <dependency>
             <groupId>org.alindner.cish</groupId>
             <artifactId>lang</artifactId>
-            <version>v0.3.6-STABLE-1e513f281a9d6a7fac8b046f988882a7f391d311</version>
+            <version>v0.3.6-STABLE-a6048b3ca87189fe3ce0a7f38c6f7c81f7640184</version>
         </dependency>
         <dependency>
             <groupId>com.google.code.gson</groupId>
@@ -18,9 +18,20 @@
             <version>2.8.6</version>
         </dependency>
         <dependency>
+            <groupId>me.tongfei</groupId>
+            <artifactId>progressbar</artifactId>
+            <version>0.9.1</version>
+        </dependency>
+        <dependency>
             <groupId>org.alindner.cish</groupId>
             <artifactId>extension</artifactId>
-            <version>v0.3.6-STABLE-1e513f281a9d6a7fac8b046f988882a7f391d311</version>
+            <version>v0.3.6-STABLE-a6048b3ca87189fe3ce0a7f38c6f7c81f7640184</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.12.0</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->

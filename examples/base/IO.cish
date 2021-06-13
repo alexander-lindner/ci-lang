@@ -10,6 +10,12 @@ if(HOME == "/home") {
 }
 backupDir = IO::createDir(TMPDIR+"/backupDir/")
 
+test=Github::test()
+`System.out.println(test);`
+`System.out.println(com.google.gson.JsonParser.parseString("{\"alex\":-7}").getAsJsonObject().get("alex").getAsInt());`
+
+Github::progress();
+
 cishLibDir = IO::of("/usr/lib/")
 IO::listFiles(cishLibDir).exec(file -> {
     if(file.~Zip() && file.~Jar()) {

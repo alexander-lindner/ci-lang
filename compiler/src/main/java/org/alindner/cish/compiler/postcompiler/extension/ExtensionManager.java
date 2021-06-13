@@ -218,20 +218,25 @@ public final class ExtensionManager implements Serializable {
 	 *
 	 * @return List of Path to the modules
 	 */
-	public List<Path> getModulesList() {
-		final List<Path> depList = this.loaded.stream()
-		                                      .flatMap(fileInfo -> fileInfo.getDependencies().stream())
-		                                      .map(file -> {
-			                                      try {
-				                                      return this.assetsManager.getByUrl(file.getUrl()).getPath();
-			                                      } catch (final IOException e) {
-				                                      ExtensionManager.log.error(String.format("Couldn't downloaded the extension: %s", file), e);
-			                                      }
-			                                      return null;
-		                                      })
-		                                      .distinct()
-		                                      .filter(Objects::nonNull)
-		                                      .collect(Collectors.toList());
+	public List<Path> getModulesList(final boolean loadDependencies) {
+		final List<Path> depList;
+		if (loadDependencies) {
+			depList = this.loaded.stream()
+			                     .flatMap(fileInfo -> fileInfo.getDependencies().stream())
+			                     .map(file -> {
+				                     try {
+					                     return this.assetsManager.getByUrl(file.getUrl()).getPath().getParent();
+				                     } catch (final IOException e) {
+					                     ExtensionManager.log.error(String.format("Couldn't downloaded the extension: %s", file), e);
+				                     }
+				                     return null;
+			                     })
+			                     .distinct()
+			                     .filter(Objects::nonNull)
+			                     .collect(Collectors.toList());
+		} else {
+			depList = new ArrayList<>();
+		}
 		this.loaded.forEach(fileInfo -> depList.add(fileInfo.getFile()));
 		return depList.stream().distinct().collect(Collectors.toList());
 	}

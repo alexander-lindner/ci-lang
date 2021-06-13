@@ -4,4 +4,6 @@ open module org.example {
 	exports org.example;
 	requires transitive cish.lang;
 	requires transitive cish.extension;
+	requires org.apache.commons.lang3;
+	requires progressbar;
 }

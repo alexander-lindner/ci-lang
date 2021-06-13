@@ -67,14 +67,14 @@ public class ModuleManager {
 	 * @return module info compatible string with newlines.
 	 */
 	public String getRequireString() {
-		final ModuleFinder pluginsFinder = ModuleFinder.of(this.extensionManager.getModulesList().toArray(new Path[0]));
+		final ModuleFinder pluginsFinder = ModuleFinder.of(this.extensionManager.getModulesList(false).toArray(new Path[0]));
 		final List<String> s = pluginsFinder
 				.findAll()
 				.stream()
 				.map(ModuleReference::descriptor)
 				.map(ModuleDescriptor::name)
 				.collect(Collectors.toList());
-		return s.size() > 0 ? s.stream().collect(Collectors.joining(";\nrequires ", "\nrequires ", ";")) : "";
+		return s.size() > 0 ? s.stream().collect(Collectors.joining(";\n\trequires transitive ", "\n\trequires transitive ", ";")) : "";
 	}
 
 	/**
@@ -83,7 +83,7 @@ public class ModuleManager {
 	 * @return list of modules
 	 */
 	public List<Path> getModulePaths() {
-		final List<Path> moduleList = this.extensionManager.getModulesList();
+		final List<Path> moduleList = this.extensionManager.getModulesList(true);
 		moduleList.add(CishPath.outPath(this.cishFile));
 
 		return moduleList;
@@ -123,7 +123,7 @@ public class ModuleManager {
 		final Configuration pluginsConfiguration = ModuleLayer
 				.boot()
 				.configuration()
-				.resolve(pluginsFinder, ModuleFinder.of(), moduleNames);
+				.resolve(ModuleFinder.of(), pluginsFinder, moduleNames);
 
 		return ModuleLayer
 				.boot()

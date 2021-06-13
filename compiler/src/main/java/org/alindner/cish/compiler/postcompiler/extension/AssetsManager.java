@@ -5,6 +5,7 @@ import org.alindner.cish.compiler.utils.CishPath;
 import org.alindner.cish.compiler.utils.Utils;
 
 import java.io.*;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
@@ -49,17 +50,29 @@ public final class AssetsManager implements Serializable {
 	 * @see CishPath#ofTmp(String)
 	 */
 	private static Asset download(final URL url) throws IOException {
-		try {
-			final ReadableByteChannel rbc    = Channels.newChannel(url.openStream());
-			final String              hash   = Utils.hash(Path.of(url.getFile()).getFileName().toString());
-			final Path                target = CishPath.ofTmp(hash + ".jar");
-			final FileOutputStream    fos;
-			fos = new FileOutputStream(target.toAbsolutePath().toString());
-			fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
-			return Asset.builder().url(url).hash(hash).path(target).build();
-		} catch (final IOException e) {
-			AssetsManager.log.error(String.format("Couldn't download extension %s", url), e);
-			throw new IOException(String.format("Couldn't download extension %s", url), e);
+		if (url.getProtocol().equals("file")) {
+			try {
+				final Path   path = Path.of(url.toURI());
+				final String hash = path.getFileName().toString();
+				return Asset.builder().url(url).hash(hash).path(path).build();
+			} catch (final URISyntaxException e) {
+				AssetsManager.log.error(String.format("Couldn't download extension %s", url), e);
+				throw new IOException(String.format("Couldn't download extension %s", url), e);
+			}
+
+		} else {
+			try {
+				final ReadableByteChannel rbc    = Channels.newChannel(url.openStream());
+				final String              hash   = Utils.hash(Path.of(url.getFile()).getFileName().toString());
+				final Path                target = CishPath.ofTmp(hash + ".jar");
+				final FileOutputStream    fos;
+				fos = new FileOutputStream(target.toAbsolutePath().toString());
+				fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
+				return Asset.builder().url(url).hash(hash).path(target).build();
+			} catch (final IOException e) {
+				AssetsManager.log.error(String.format("Couldn't download extension %s", url), e);
+				throw new IOException(String.format("Couldn't download extension %s", url), e);
+			}
 		}
 	}
 
